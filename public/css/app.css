@@ -1,0 +1,36 @@
+@import url(https://fonts.googleapis.com/css?family=Nunito);
+.error-message {
+  font-size: 12px;
+  color: #ec4561;
+  margin-top: 5px;
+}
+
+.error-border {
+  border-color: #ec4561 !important;
+}
+
+.submit-button {
+  height: 38px !important;
+}
+
+.router-link-exact-active {
+  color: #b4c9de !important;
+  background-color: #383b4e;
+}
+
+a {
+  color: rgb(52, 144, 220);
+}
+
+.error {
+  color: red;
+}
+
+thead {
+  background: #333547;
+  color: white;
+}
+
+.hostelVoucher td, .hostelVoucher th {
+  border: 1px solid #000000 !important;
+}
