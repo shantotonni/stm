@@ -18,6 +18,100 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
+    public function login(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'loginId' => 'required|string',
+            'password'  => 'required|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Invalid'], 400);
+        }
+
+        if (!$token = JWTAuth::attempt(['login_code' => $request->loginId,'password' => $request->password])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid Email or Password!'
+            ],401);
+        }
+
+        $user = auth()->user();
+        $user->update(['last_login_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'user_type' => $user->user_type,
+                'role_id' => $user->role_id,
+                'is_change_password' => $user->is_change_password,
+                'is_active' => $user->is_active,
+                'mobile' => $user->mobile,
+                'role' => $user->role->name,
+                'permissions' => $user->getAllPermissions()
+            ],
+            'expires_in' => auth()->factory()->getTTL() * 60
+        ]);
+    }
+
+    public function register(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'designation' => 'required',
+            'email' => 'required',
+            'password' => 'required|string|min:6'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Invalid'], 400);
+        }
+
+        try {
+            $user = new User();
+            $user->Name = $request->name;
+            $user->Designation = $request->designation;
+            $user->Email = $request->email;
+            $user->Password = bcrypt($request->password);
+            $user->Status = 'Y';
+            $user->CreatedBy = 1;
+            $user->UpdatedBy = 1;
+            $user->UserType = 'default';
+            $user->Avatar = 'default.png';
+            $user->save();
+            return response()->json(['message' => "success"]);
+
+        } catch (\Exception $exception) {
+            return $exception->getMessage();
+        }
+    }
+
+    public function me()
+    {
+        $data = $this->guard()->user()->load([
+            'role',
+            'student',
+            'teacher',
+        ]);
+        return new UserResource($data);
+//        return response()->json($this->guard()->user()->load([
+//            'role',''
+//        ]));
+    }
+
+//    public function refresh()
+//    {
+//        return response()->json([
+//            'success' => true,
+//            'token' => JWTAuth::refresh(JWTAuth::getToken()),
+//            'expires_in' => auth()->factory()->getTTL() * 60
+//        ]);
+//    }
+
     public function changePass(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -75,81 +169,12 @@ class AuthController extends Controller
         return response()->json(['message' => 'Profile updated successfully']);
     }
 
-    public function login(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'loginId' => 'required|string',
-            'password'  => 'required|string|min:6',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['message' => 'Invalid'], 400);
-        }
-
-        if ($token = JWTAuth::attempt(['login_code' => $request->loginId,'password' => $request->password])) {
-            return response()->json([
-                'token' => $token,
-                'user' => Auth::user()
-            ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid Email or Password!'
-            ],500);
-        }
-    }
-
-    public function register(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string',
-            'designation' => 'required',
-            'email' => 'required',
-            'password' => 'required|string|min:6'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['message' => 'Invalid'], 400);
-        }
-
-        try {
-            $user = new User();
-            $user->Name = $request->name;
-            $user->Designation = $request->designation;
-            $user->Email = $request->email;
-            $user->Password = bcrypt($request->password);
-            $user->Status = 'Y';
-            $user->CreatedBy = 1;
-            $user->UpdatedBy = 1;
-            $user->UserType = 'default';
-            $user->Avatar = 'default.png';
-            $user->save();
-            return response()->json(['message' => "success"]);
-
-        } catch (\Exception $exception) {
-            return $exception->getMessage();
-        }
-    }
-
-    public function me()
-    {
-        $data = $this->guard()->user()->load([
-            'role',
-            'student',
-            'teacher',
-        ]);
-        return new UserResource($data);
-//        return response()->json($this->guard()->user()->load([
-//            'role',''
-//        ]));
-    }
 
     public function logout()
     {
         try {
-            $user = JWTAuth::parseToken()->authenticate();
-            //UserLog::create(['UserId' => $user->ID, 'TransactionTime' => Carbon::now(), 'TransactionDetails' => "Logged Out"]);
-            $this->guard()->logout();
+            JWTAuth::invalidate(JWTAuth::getToken());
+            return response()->json(['message' => 'Successfully logged out']);
         } catch (\Exception $exception) {
 
         }

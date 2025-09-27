@@ -9,7 +9,22 @@ class Role extends Model
 {
     use HasFactory;
 
-    protected $table = "roles";
-    public $primaryKey = "id";
-    protected $guarded = [];
+    protected $table = 'roles';
+    public $primaryKey = 'id';
+    protected $fillable = ['name', 'display_name', 'description'];
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'role_permissions');
+    }
+
+    public function hasPermission($permission)
+    {
+        return $this->permissions->contains('name', $permission);
+    }
 }

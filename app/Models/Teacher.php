@@ -13,9 +13,31 @@ class Teacher extends Model
     public $primaryKey = 'id';
     protected $guarded = [];
 
-    public function subject()
+    public function user()
     {
-        return $this->belongsTo(Subject::class);
+        return $this->belongsTo(User::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'teacher_subjects')
+            ->withPivot('session_id', 'is_coordinator')
+            ->withTimestamps();
+    }
+
+    public function classSchedules()
+    {
+        return $this->hasMany(ClassSchedule::class);
+    }
+
+    public function classes()
+    {
+        return $this->hasMany(Classes::class, 'created_by');
     }
 
     public function evaluations()
@@ -23,8 +45,9 @@ class Teacher extends Model
         return $this->hasMany(TeacherEvaluation::class);
     }
 
-    public function department()
+    public function materials()
     {
-        return $this->belongsTo(Department::class);
+        return $this->hasMany(ClassMaterial::class);
     }
+
 }

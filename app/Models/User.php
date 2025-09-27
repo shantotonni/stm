@@ -30,15 +30,22 @@ class User extends Authenticatable implements JWTSubject
 
     public function getJWTCustomClaims()
     {
-        return [];
+        return [
+            'role' => $this->role->name,
+            'user_type' => $this->user_type,
+            'permissions' => $this->getAllPermissions()
+        ];
     }
 
-    public function role(){
-        return $this->belongsTo(Role::class,'role_id','id');
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
     }
+
     public function department(){
         return $this->belongsTo(Department::class,'department_id','id');
     }
+
     public function designation(){
         return $this->belongsTo(Designation::class,'designation_id','id');
     }
@@ -66,6 +73,21 @@ class User extends Authenticatable implements JWTSubject
     public function isAdmin()
     {
         return $this->user_type === 'admin';
+    }
+
+    public function hasPermission($permission)
+    {
+        return $this->role->permissions->contains('name', $permission);
+    }
+
+    public function getAllPermissions()
+    {
+        return $this->role->permissions->pluck('name')->toArray();
+    }
+
+    public function can($permission, $arguments = [])
+    {
+        return $this->hasPermission($permission);
     }
 
 }

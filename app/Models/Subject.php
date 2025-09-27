@@ -11,10 +11,35 @@ class Subject extends Model
 
     protected $table = 'subjects';
     public $primaryKey = 'id';
-    protected $fillable = ['name'];
+    protected $guarded = [];
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
 
     public function teachers()
     {
-        return $this->hasMany(Teacher::class);
+        return $this->belongsToMany(Teacher::class, 'teacher_subjects')
+            ->withPivot('session_id', 'is_coordinator')
+            ->withTimestamps();
     }
+
+    public function students()
+    {
+        return $this->belongsToMany(Student::class, 'student_enrollments')
+            ->withPivot('enrollment_date', 'is_active')
+            ->withTimestamps();
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(ClassSchedule::class);
+    }
+
+    public function materials()
+    {
+        return $this->hasMany(ClassMaterial::class);
+    }
+
 }
