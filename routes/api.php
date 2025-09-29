@@ -122,3 +122,15 @@ Route::group(['middleware' => ['jwt:api']], function () {
     });
 
 });
+
+//admin module
+Route::group(['middleware' => ['auth:api']], function () {
+    // Menu routes
+    Route::get('get-user-menu', [MenuController::class, 'getUserMenus']);
+    Route::apiResource('menus', MenuController::class);
+    Route::get('menus/roles', [MenuController::class, 'getRoleMenus']);
+    Route::put('menus/roles/{role}', [MenuController::class, 'updateRoleMenus']);
+
+    // Other existing routes...
+});
+

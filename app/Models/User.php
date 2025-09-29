@@ -90,4 +90,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasPermission($permission);
     }
 
+    // Get user's accessible menus
+    public function getAccessibleMenus()
+    {
+
+        return Menu::getMenuTree($this->id);
+    }
+
 }

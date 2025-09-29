@@ -39,6 +39,9 @@ class AuthController extends Controller
         $user = auth()->user();
         $user->update(['last_login_at' => now()]);
 
+        $user = auth()->user();
+        $menus = $user->getAccessibleMenus();
+
         return response()->json([
             'success' => true,
             'token' => $token,
@@ -52,7 +55,9 @@ class AuthController extends Controller
                 'is_active' => $user->is_active,
                 'mobile' => $user->mobile,
                 'role' => $user->role->name,
-                'permissions' => $user->getAllPermissions()
+                'menus' => $menus,
+                'permissions' => $user->getAllPermissions(),
+                'profile' => $user->user_type === 'student' ? $user->student : $user->teacher
             ],
             'expires_in' => auth()->factory()->getTTL() * 60
         ]);
@@ -92,15 +97,21 @@ class AuthController extends Controller
 
     public function me()
     {
-        $data = $this->guard()->user()->load([
-            'role',
-            'student',
-            'teacher',
+        $user = auth()->user();
+        $menus = $user->getAccessibleMenus();
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'user_type' => $user->user_type,
+                'role' => $user->role->name,
+                'permissions' => $user->getAllPermissions(),
+                'menus' => $menus,
+                'profile' => $user->user_type === 'student' ? $user->student : $user->teacher
+            ]
         ]);
-        return new UserResource($data);
-//        return response()->json($this->guard()->user()->load([
-//            'role',''
-//        ]));
     }
 
 //    public function refresh()
