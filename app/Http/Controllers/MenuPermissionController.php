@@ -61,4 +61,8 @@ class MenuPermissionController extends Controller
             }])->get();
         return response()->json(['user_menu'=> $menu],200);
     }
+
+    public function getPermissions(){
+
+    }
 }

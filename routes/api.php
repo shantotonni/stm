@@ -121,16 +121,14 @@ Route::group(['middleware' => ['jwt:api']], function () {
         //Route::get('student-payment',[ReportController::class,'studentPayment']);
     });
 
-});
-
-//admin module
-Route::group(['middleware' => ['auth:api']], function () {
+    //admin module
     // Menu routes
     Route::get('get-user-menu', [MenuController::class, 'getUserMenus']);
     Route::apiResource('menus', MenuController::class);
-    Route::get('menus/roles', [MenuController::class, 'getRoleMenus']);
+    Route::get('/roles', [MenuController::class, 'getRoleMenus']);
+    Route::get('/permissions', [MenuPermissionController::class, 'getPermissions']);
     Route::put('menus/roles/{role}', [MenuController::class, 'updateRoleMenus']);
 
-    // Other existing routes...
 });
+
 

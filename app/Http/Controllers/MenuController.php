@@ -14,10 +14,6 @@ use Illuminate\Support\Facades\Validator;
 
 class MenuController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:api');
-    }
 
     // Get user's accessible menus
     public function getUserMenus()
