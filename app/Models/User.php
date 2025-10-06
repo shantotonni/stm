@@ -14,14 +14,49 @@ class User extends Authenticatable implements JWTSubject
 
     protected $table = "users";
     public $primaryKey = 'id';
-    protected $guarded = [];
+    protected $fillable = [
+        'login_code',
+        'name',
+        'password',
+        'mobile',
+        'role_id',
+        'avatar',
+        'is_active',
+        'user_type',
+        'is_change_password',
+        'last_login_at',
+    ];
 
     protected $hidden = [
         'password',
     ];
+
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
+
+    public function getIsActiveAttribute($value)
+    {
+        return $value === 'Y';
+    }
+
+    public function setIsActiveAttribute($value)
+    {
+        $this->attributes['is_active'] = $value ? 'Y' : 'N';
+    }
+
+    public function getIsChangePasswordAttribute($value)
+    {
+        return $value === 'N';
+    }
+
+    public function setIsChangePasswordAttribute($value)
+    {
+        $this->attributes['is_change_password'] = 'N';
+    }
+
 
     public function getJWTIdentifier()
     {

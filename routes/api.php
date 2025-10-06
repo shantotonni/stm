@@ -7,7 +7,9 @@ use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EvaluationStatementController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MenuPermissionController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SessionsController;
 use App\Http\Controllers\StudentAuthController;
 use App\Http\Controllers\StudentController;
@@ -121,13 +123,44 @@ Route::group(['middleware' => ['jwt:api']], function () {
         //Route::get('student-payment',[ReportController::class,'studentPayment']);
     });
 
-    //admin module
+//    //admin module
+//    // Menu routes
+//    Route::get('get-user-menu', [MenuController::class, 'getUserMenus']);
+//    Route::apiResource('menus', MenuController::class);
+//    Route::get('/roles', [MenuController::class, 'getRoleMenus']);
+//    Route::get('/permissions', [MenuPermissionController::class, 'getPermissions']);
+//    Route::put('menus/roles/{role}', [MenuController::class, 'updateRoleMenus']);
+
+});
+
+// Protected routes
+Route::middleware(['jwt:api'])->group(function () {
     // Menu routes
     Route::get('get-user-menu', [MenuController::class, 'getUserMenus']);
+    Route::get('menus/roles', [MenuController::class, 'getRoleMenus']);
+    Route::put('menus/roles/{roleId}', [MenuController::class, 'updateRoleMenus']);
+    Route::post('menus/reorder', [MenuController::class, 'reorder']);
+    Route::patch('menus/{id}/toggle-status', [MenuController::class, 'toggleStatus']);
     Route::apiResource('menus', MenuController::class);
-    Route::get('/roles', [MenuController::class, 'getRoleMenus']);
-    Route::get('/permissions', [MenuPermissionController::class, 'getPermissions']);
-    Route::put('menus/roles/{role}', [MenuController::class, 'updateRoleMenus']);
+
+    // Role routes
+    Route::apiResource('roles', RoleController::class)->only(['index', 'show']);
+
+    // Permission routes
+    Route::get('permissions', [PermissionController::class, 'index']);
+    Route::get('permissions/grouped', [PermissionController::class, 'grouped']);
+
+
+    Route::prefix('users')->group(function () {
+        Route::get('/', [UserController::class, 'index']);
+        Route::post('/', [UserController::class, 'store']);
+        Route::get('/{id}', [UserController::class, 'show']);
+        Route::post('/{id}', [UserController::class, 'update']); // POST for file upload
+        Route::post('/{id}/toggle-status', [UserController::class, 'toggleStatus']);
+        Route::delete('/{id}', [UserController::class, 'destroy']);
+    });
+
+    Route::get('/roles', [UserController::class, 'getRoles']);
 
 });
 

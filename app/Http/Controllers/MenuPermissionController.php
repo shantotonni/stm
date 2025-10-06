@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Menu;
 use App\Models\MenuItem;
+use App\Models\Permission;
 use App\Models\UserMenu;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -63,6 +64,9 @@ class MenuPermissionController extends Controller
     }
 
     public function getPermissions(){
-
+        $permission = Permission::query()->get();
+        return response()->json([
+           'permission' => $permission
+        ]);
     }
 }

@@ -16,7 +16,9 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Intervention\Image\Facades\Image;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -25,69 +27,167 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $users = User::with('role')->where('role_id','!=',4)->orderBy('created_at','desc')->paginate(15);
-        return new UserCollection($users);
-    }
+        $query = User::with('role');
 
-    public function store(UserRequest $request){
-
-        if ($request->has('avater')) {
-            $image = $request->avater;
-            $name = uniqid().time().'.' . explode('/', explode(':', substr($image, 0, strpos($image, ';')))[1])[1];
-            Image::make($image)->save(public_path('images/user/').$name);
-        } else {
-            $name = 'not_found.jpg';
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('login_code', 'like', "%{$search}%")
+                    ->orWhere('mobile', 'like', "%{$search}%");
+            });
         }
 
-        $user = new User();
-        $user->name = $request->name;
-        $user->role_id = $request->role_id;
-        $user->email = $request->email;
-        $user->mobile = $request->mobile;
-        $user->BMDC_NO = $request->user_unique_code;
-        $user->avatar = $name;
-        $user->password = bcrypt($request->password);
-        $user->status = 'Y';
-        $user->is_head = 'N';
-        $user->save();
+        if ($request->filled('status') && $request->status !== '') {
+            $status = $request->status == '1' ? 'Y' : 'N';
+            $query->where('is_active', $status);
+        }
 
-        return response()->json(['message'=>'User Created Successfully'],200);
+        if ($request->filled('user_type') && $request->user_type !== '') {
+            $query->where('user_type', $request->user_type);
+        }
+
+        if ($request->filled('role_id') && $request->role_id !== '') {
+            $query->where('role_id', $request->role_id);
+        }
+
+        $users = $query->orderBy('created_at', 'desc')
+            ->paginate($request->per_page ?? 10);
+
+        return response()->json($users);
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'login_code' => 'required|string|max:100|unique:users',
+            'name' => 'required|string|max:100',
+            'password' => 'required|string|min:6',
+            'mobile' => 'nullable|string|max:20',
+            'role_id' => 'required|integer',
+            'user_type' => 'required|in:admin,teacher,student,dept_head',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'is_active' => 'boolean',
+            'is_change_password' => 'boolean',
+        ]);
 
-    public function update(UserUpdateRequest $request, $id){
+        $data = [
+            'login_code' => $request->login_code,
+            'name' => $request->name,
+            'password' => Hash::make($request->password),
+            'mobile' => $request->mobile,
+            'role_id' => $request->role_id,
+            'user_type' => $request->user_type,
+            'is_active' => $request->is_active ?? true,
+            'is_change_password' => $request->is_change_password ?? false,
+        ];
 
-        $user = User::where('user_id',$request->user_id)->first();
-        $image = $request->avater;
+        // Handle avatar upload
+        if ($request->hasFile('avatar')) {
+            $avatar = $request->file('avatar');
+            $avatarName = time() . '_' . $avatar->getClientOriginalName();
+            $avatar->move(public_path('uploads/avatars'), $avatarName);
+            $data['avatar'] = 'uploads/avatars/' . $avatarName;
+        }
 
-        if ($image != $user->avater) {
-            if ($request->has('avater')) {
-                //code for remove old file
-                if ($user->avater != '' && $user->avater != null) {
-                    $destinationPath = 'images/user/';
-                    $file_old = $destinationPath . $user->avater;
-                    if (file_exists($file_old)) {
-                        unlink($file_old);
-                    }
-                }
-                $name = uniqid() . time() . '.' . explode('/', explode(':', substr($image, 0, strpos($image, ';')))[1])[1];
-                Image::make($image)->resize(1600,1000)->save(public_path('images/user/') . $name);
-            } else {
-                $name = $user->avater;
+        $user = User::create($data);
+
+        return response()->json([
+            'message' => 'User created successfully',
+            'user' => $user->load('role')
+        ], 201);
+    }
+
+    public function show($id)
+    {
+        $user = User::with('role')->findOrFail($id);
+        return response()->json($user);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'login_code' => ['required', 'string', 'max:100', Rule::unique('users')->ignore($user->id)],
+            'name' => 'required|string|max:100',
+            'password' => 'nullable|string|min:6',
+            'mobile' => 'nullable|string|max:20',
+            'role_id' => 'required|integer',
+            'user_type' => 'required|in:admin,teacher,student,dept_head',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'is_active' => 'boolean',
+            'is_change_password' => 'boolean',
+        ]);
+
+
+        $data = [
+            'login_code' => $request->login_code,
+            'name' => $request->name,
+            'mobile' => $request->mobile,
+            'role_id' => $request->role_id,
+            'user_type' => $request->user_type,
+            'is_active' => $request->is_active ? 'Y' : 'N',
+            'is_change_password' => 'N',
+        ];
+
+        // Update password if provided
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        if ($request->hasFile('avatar')) {
+            // Delete old avatar
+            if ($user->avatar && file_exists(public_path($user->avatar))) {
+                unlink(public_path($user->avatar));
             }
-        }else{
-            $name = $user->avater;
+
+            $avatar = $request->file('avatar');
+            $avatarName = time() . '_' . $avatar->getClientOriginalName();
+            $avatar->move(public_path('uploads/avatars'), $avatarName);
+            $data['avatar'] = 'uploads/avatars/' . $avatarName;
         }
 
-        $user->name = $request->name;
-        $user->role_id = $request->role_id;
-        $user->email = $request->email;
-        $user->mobile = $request->mobile;
-        $user->BMDC_NO = $request->user_unique_code;
-        $user->avatar = $name;
-        $user->status = 'Y';
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'User updated successfully',
+            'user' => $user->load('role')
+        ]);
+    }
+
+    public function toggleStatus($id)
+    {
+        $user = User::findOrFail($id);
+        $user->is_active = !$user->is_active;
         $user->save();
-        return response()->json(['message'=>'User Updated Successfully'],200);
+
+        return response()->json([
+            'message' => 'User status updated successfully',
+            'user' => $user->load('role')
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->avatar && file_exists(public_path($user->avatar))) {
+            unlink(public_path($user->avatar));
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'message' => 'User deleted successfully'
+        ]);
+    }
+
+    // Get all roles for dropdown
+    public function getRoles()
+    {
+        $roles = \App\Models\Role::all();
+        return response()->json($roles);
     }
 
     public function updatePassword(Request $request)
@@ -115,16 +215,6 @@ class UserController extends Controller
         }
     }
 
-    public function delete($id)
-    {
-        if (false) {
-            return response()->json(['message' => "User is already used!"], 500);
-        } else {
-            User::where('id', $id)->delete();
-            return response()->json(['message' => "User deleted successfully"]);
-        }
-    }
-
     public function getUserInfo($staffId)
     {
         $user = User::where('StaffID',$staffId)->with(['roles','userBusiness.business','userDepartment.department','business','userSubmenu'])->first();
@@ -133,54 +223,6 @@ class UserController extends Controller
             'status' => 'success',
             'data' => $user,
             'allSubMenus' => $allSubMenus
-        ]);
-    }
-
-    public function hrData(Request $request)
-    {
-        $query = DB::connection('hr_db')->select("SELECT P.EmpCode, P.Name, D.DesgName, De.DeptName 
-        FROM Personal P	
-            INNER JOIN Employer E
-                ON P.EmpCode = E.EmpCode
-            INNER JOIN Designation D
-                ON E.DesgCode = D.DesgCode
-            INNER JOIN Department DE
-                ON E.DeptCode = DE.DeptCode
-        WHERE E.EmpCode = '$request->staffId'");
-        if (count($query)) {
-            $data = $query[0];
-        } else {
-            $data = [];
-        }
-        return response()->json([
-            'status' => 'success',
-            'data' => $data
-        ]);
-    }
-
-    public function loadUsersHR(Request $request)
-    {
-        $users = Advances::select('ResStaffID as EmpCode','ResStaffName as Name','ResStaffDesignation as DesgName','ResStaffDepartment as DeptName','ResStaffEmail as Email','ResStaffMobile as Mobile','BankID','BranchName','RoutingNo')
-            ->where('ResStaffID',$request->staffId)->first();
-        if (!$users) {
-            $query = DB::connection('hr_db')->select("SELECT P.EmpCode, P.Name, D.DesgName, De.DeptName 
-        FROM Personal P	
-            INNER JOIN Employer E
-                ON P.EmpCode = E.EmpCode
-            INNER JOIN Designation D
-                ON E.DesgCode = D.DesgCode
-            INNER JOIN Department DE
-                ON E.DeptCode = DE.DeptCode
-        WHERE E.EmpCode = '$request->staffId'");
-            if (count($query)) {
-                $users = $query[0];
-            } else {
-                $users = [];
-            }
-        }
-        return response()->json([
-            'status' => 'success',
-            'data' => $users
         ]);
     }
 
