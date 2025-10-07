@@ -11,7 +11,33 @@ class Teacher extends Model
 
     protected $table = 'teachers';
     public $primaryKey = 'id';
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'BMDC_NO',
+        'name',
+        'email',
+        'mobile',
+        'department_id',
+        'designation_id',
+        'qualification',
+        'joining_date',
+        'is_head',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    public function getIsHeadAttribute($value)
+    {
+        return $value === 'Y';
+    }
+
+    public function setIsHeadAttribute($value)
+    {
+        $this->attributes['is_head'] = $value ? 'Y' : 'N';
+    }
 
     public function user()
     {
@@ -21,6 +47,11 @@ class Teacher extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class);
     }
 
     public function subjects()

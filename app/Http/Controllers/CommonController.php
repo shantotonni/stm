@@ -42,24 +42,19 @@ class CommonController extends Controller
     }
 
     public function getAllSession(){
-        return response()->json([
-            'status' => 'success',
-            'sessions' => Sessions::all(),
-        ]);
+        $sessions = Sessions::where('is_active', 'Y')
+            ->get(['id', 'name']);
+        return response()->json($sessions);
     }
 
     public function getAllCategory(){
-        return response()->json([
-            'status' => 'success',
-            'categories' => Category::all(),
-        ]);
+        $categories = Category::query()->get(['id', 'name']);
+        return response()->json($categories);
     }
 
     public function getAllDepartment(){
-        return response()->json([
-            'status' => 'success',
-            'departments' => Department::all(),
-        ]);
+        $departments = Department::query()->get(['id','name']);
+        return response()->json($departments);
     }
 
     public function getAllDesignation(){
@@ -102,6 +97,29 @@ class CommonController extends Controller
         return response()->json([
            'years' => $years
         ]);
+    }
+
+    // Get all departments for dropdown
+    public function getDepartments()
+    {
+        $departments = Department::where('is_active', 1)->get(['id', 'name']);
+        return response()->json($departments);
+    }
+
+    // Get all designations for dropdown
+    public function getDesignations()
+    {
+        $designations = Designation::all();
+        return response()->json($designations);
+    }
+
+    // Get all users (for teacher assignment)
+    public function getUsers()
+    {
+        $users = \App\Models\User::where('user_type', 'teacher')
+            ->where('is_active', 'Y')
+            ->get(['id', 'name', 'login_code']);
+        return response()->json($users);
     }
 
 }

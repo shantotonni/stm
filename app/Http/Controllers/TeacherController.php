@@ -2,111 +2,158 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\TeacherCollection;
 use App\Models\Teacher;
-use App\Models\User;
+use App\Models\Department;
+use App\Models\Designation;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TeacherController extends Controller
 {
     public function index(Request $request)
     {
-        $department_id = $request->department_id;
-        $BMDC_NO = $request->BMDC_NO;
-        $teachers = User::query()
-            ->with(['department','designation'])
-            ->whereIn('role_id', [4, 2])
-            ->when($department_id, function ($query, $department_id) {
-                $query->where('department_id', $department_id);
-            })
-            ->when($BMDC_NO, function ($query, $BMDC_NO) {
-                $query->where('BMDC_NO', $BMDC_NO);
-            })
-            ->orderBy('user_id','desc')->paginate(15);
-        return new TeacherCollection($teachers);
+        $query = Teacher::with(['user', 'department', 'designation']);
+
+        if ($request->filled('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('mobile', 'like', "%{$search}%")
+                    ->orWhere('BMDC_NO', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by department
+        if ($request->filled('department_id') && $request->department_id !== '') {
+            $query->where('department_id', $request->department_id);
+        }
+
+        // Filter by designation
+        if ($request->filled('designation_id') && $request->designation_id !== '') {
+            $query->where('designation_id', $request->designation_id);
+        }
+
+        // Filter by head status
+        if ($request->filled('is_head') && $request->is_head !== '') {
+            $status = $request->is_head == '1' ? 'Y' : 'N';
+            $query->where('is_head', $status);
+        }
+
+        $teachers = $query->orderBy('created_at', 'desc')
+            ->paginate($request->per_page ?? 10);
+
+        return response()->json($teachers);
     }
 
     public function store(Request $request)
     {
-        try {
-            $exist_teacher = User::where('BMDC_NO',$request->BMDC_NO)->exists();
-            if ($exist_teacher){
-                return response()->json([
-                    'status'=>400,
-                    'message'=>'Already Added'
-                ],400);
-            }
+        $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'BMDC_NO' => 'required|string|max:255|unique:teachers',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:teachers',
+            'mobile' => 'required|string|max:255',
+            'department_id' => 'nullable|integer|exists:departments,id',
+            'designation_id' => 'nullable|integer',
+            'qualification' => 'required|string|max:255',
+            'joining_date' => 'required|string|max:255',
+            'is_head' => 'boolean',
+        ]);
 
-            $teachers = new User();
-            $teachers->BMDC_NO = $request->BMDC_NO;
-            $teachers->name = $request->name;
-            $teachers->email = $request->email ? $request->email : '';
-            $teachers->password = bcrypt('123456');
-            $teachers->mobile = $request->mobile ? $request->mobile : '';
-            if ($request->is_head === 'Y'){
-                $teachers->role_id = 2;
-            }else{
-                $teachers->role_id = 4;
-            }
-            $teachers->department_id = $request->department_id;
-            $teachers->designation_id = $request->designation_id;
-            $teachers->is_head = $request->is_head;
-            $teachers->status = 'Y';
-            $teachers->save();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Student created successfully'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status'=>400,
-                'message'=>$e->getMessage()
-            ],400);
+        if ($request->is_head){
+            $is_head = 'Y';
+        }else{
+            $is_head = 'N';
         }
+
+        $teacher = Teacher::create([
+            'user_id' => $request->user_id,
+            'BMDC_NO' => $request->BMDC_NO,
+            'name' => $request->name,
+            'email' => $request->email,
+            'mobile' => $request->mobile,
+            'department_id' => $request->department_id,
+            'designation_id' => $request->designation_id,
+            'qualification' => $request->qualification,
+            'joining_date' => $request->joining_date,
+            'is_head' => $is_head,
+        ]);
+
+        return response()->json([
+            'message' => 'Teacher created successfully',
+            'teacher' => $teacher->load(['user', 'department', 'designation'])
+        ], 201);
     }
 
-    public function update(Request $request,$id)
+    public function show($id)
     {
-        try {
+        $teacher = Teacher::with(['user', 'department', 'designation'])->findOrFail($id);
+        return response()->json($teacher);
+    }
 
-            $teachers = User::find($id);
-            $teachers->name = $request->name;
-            $teachers->mobile = $request->mobile ? $request->mobile : '';
-            $teachers->email = $request->email ? $request->email : '';
-            $teachers->department_id = $request->department_id;
-            $teachers->designation_id = $request->designation_id;
-            $teachers->role_id = 4;
-            $teachers->is_head = $request->is_head;
-            $teachers->save();
+    public function update(Request $request, $id)
+    {
+        $teacher = Teacher::findOrFail($id);
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Student created successfully'
-            ]);
+        $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'BMDC_NO' => ['required', 'string', 'max:255', Rule::unique('teachers')->ignore($teacher->id)],
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'email', 'max:255', Rule::unique('teachers')->ignore($teacher->id)],
+            'mobile' => 'required|string|max:255',
+            'department_id' => 'nullable|integer|exists:departments,id',
+            'designation_id' => 'nullable|integer',
+            'qualification' => 'required|string|max:255',
+            'joining_date' => 'required|string|max:255',
+            'is_head' => 'boolean',
+        ]);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'status'=>400,
-                'message'=>$e->getMessage()
-            ],400);
+        if ($request->is_head){
+            $is_head = 'Y';
+        }else{
+            $is_head = 'N';
         }
+
+        $teacher->update([
+            'user_id' => $request->user_id,
+            'BMDC_NO' => $request->BMDC_NO,
+            'name' => $request->name,
+            'email' => $request->email,
+            'mobile' => $request->mobile,
+            'department_id' => $request->department_id,
+            'designation_id' => $request->designation_id,
+            'qualification' => $request->qualification,
+            'joining_date' => $request->joining_date,
+            'is_head' => $is_head,
+        ]);
+
+        return response()->json([
+            'message' => 'Teacher updated successfully',
+            'teacher' => $teacher->load(['user', 'department', 'designation'])
+        ]);
+    }
+
+    public function toggleHead($id)
+    {
+        $teacher = Teacher::findOrFail($id);
+        $teacher->is_head = !$teacher->is_head;
+        $teacher->save();
+
+        return response()->json([
+            'message' => 'Teacher head status updated successfully',
+            'teacher' => $teacher->load(['user', 'department', 'designation'])
+        ]);
     }
 
     public function destroy($id)
     {
-        $student = Teacher::where('id',$id)->first();
-        $student->status = 'N';
-        $student->save();
+        $teacher = Teacher::findOrFail($id);
+        $teacher->delete();
+
         return response()->json([
-            'status' => 'success',
-            'message' => 'Student Deleted successfully'
+            'message' => 'Teacher deleted successfully'
         ]);
     }
 
-    public function search($query)
-    {
-        return new TeacherCollection(Teacher::where('name','LIKE',"%$query%")->latest()->paginate(20));
-    }
 }

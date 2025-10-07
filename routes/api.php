@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ClassroomController;
+use App\Http\Controllers\ClassScheduleController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
@@ -14,6 +16,7 @@ use App\Http\Controllers\SessionsController;
 use App\Http\Controllers\StudentAuthController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentDashboardController;
+use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\TeacherSurveyController;
 use Illuminate\Support\Facades\Route;
@@ -161,6 +164,74 @@ Route::middleware(['jwt:api'])->group(function () {
     });
 
     Route::get('/roles', [UserController::class, 'getRoles']);
+
+    Route::prefix('teachers')->group(function () {
+        Route::get('/', [TeacherController::class, 'index']);
+        Route::post('/', [TeacherController::class, 'store']);
+        Route::get('/{id}', [TeacherController::class, 'show']);
+        Route::put('/{id}', [TeacherController::class, 'update']);
+        Route::post('/{id}/toggle-head', [TeacherController::class, 'toggleHead']);
+        Route::delete('/{id}', [TeacherController::class, 'destroy']);
+    });
+
+
+
+    Route::prefix('students')->group(function () {
+        Route::get('/', [StudentController::class, 'index']);
+        Route::post('/', [StudentController::class, 'store']);
+        Route::get('/{id}', [StudentController::class, 'show']);
+        Route::put('/{id}', [StudentController::class, 'update']);
+        Route::delete('/{id}', [StudentController::class, 'destroy']);
+    });
+
+    Route::get('/student-users', [StudentController::class, 'getUsers']);
+
+    Route::prefix('departments')->group(function () {
+        Route::get('/', [DepartmentController::class, 'index']);
+        Route::get('/{id}', [DepartmentController::class, 'show']);
+        Route::post('/', [DepartmentController::class, 'store']);
+        Route::put('/{id}', [DepartmentController::class, 'update']);
+        Route::delete('/{id}', [DepartmentController::class, 'destroy']);
+        Route::patch('/{id}/toggle-status', [DepartmentController::class, 'toggleStatus']);
+        Route::get('/stats/all', [DepartmentController::class, 'statistics']);
+        Route::post('/bulk-delete', [DepartmentController::class, 'bulkDelete']);
+    });
+
+    Route::prefix('subjects')->group(function () {
+        Route::get('/', [SubjectController::class, 'index']);
+        Route::post('/', [SubjectController::class, 'store']);
+        Route::get('/{id}', [SubjectController::class, 'show']);
+        Route::put('/{id}', [SubjectController::class, 'update']);
+        Route::delete('/{id}', [SubjectController::class, 'destroy']);
+    });
+
+    Route::prefix('classrooms')->group(function () {
+        Route::get('/', [ClassroomController::class, 'index']);
+        Route::post('/', [ClassroomController::class, 'store']);
+        Route::get('/stats', [ClassroomController::class, 'getStats']);
+        Route::get('/{id}', [ClassroomController::class, 'show']);
+        Route::put('/{id}', [ClassroomController::class, 'update']);
+        Route::delete('/{id}', [ClassroomController::class, 'destroy']);
+    });
+
+    Route::prefix('schedules')->group(function () {
+        Route::get('/', [ClassScheduleController::class, 'index']);
+        Route::post('/', [ClassScheduleController::class, 'store']);
+        Route::get('/form-data', [ClassScheduleController::class, 'getFormData']);
+        Route::get('/weekly', [ClassScheduleController::class, 'getWeeklySchedule']);
+        Route::get('/stats', [ClassScheduleController::class, 'getStats']);
+        Route::get('/{id}', [ClassScheduleController::class, 'show']);
+        Route::put('/{id}', [ClassScheduleController::class, 'update']);
+        Route::delete('/{id}', [ClassScheduleController::class, 'destroy']);
+    });
+
+    //common route
+    Route::get('/get-session', [CommonController::class, 'getAllSession']);
+    Route::get('/get-category', [CommonController::class, 'getAllCategory']);
+    Route::get('/get-departments', [CommonController::class, 'getDepartments']);
+    Route::get('/designations', [CommonController::class, 'getDesignations']);
+    Route::get('/teacher-users', [CommonController::class, 'getUsers']);
+
 
 });
 

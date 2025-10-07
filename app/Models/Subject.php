@@ -11,7 +11,25 @@ class Subject extends Model
 
     protected $table = 'subjects';
     public $primaryKey = 'id';
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'code',
+        'department_id',
+        'year',
+        'semester',
+        'credit_hours',
+        'theory_hours',
+        'practical_hours',
+        'description',
+        'is_active'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'credit_hours' => 'integer',
+        'theory_hours' => 'integer',
+        'practical_hours' => 'integer',
+    ];
 
     public function department()
     {

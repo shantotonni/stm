@@ -11,7 +11,18 @@ class Student extends Model
 
     protected $table = 'students';
     public $primaryKey = 'id';
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id', 'department_id', 'name', 'student_id_number', 'roll_no',
+        'email', 'mobile', 'session', 'session_id', 'category_id', 'category',
+        'year', 'semester', 'is_hostel', 'nationality', 'address', 'nid',
+        'date_of_birth', 'batch', 'blood_group', 'guardian_name',
+        'guardian_phone', 'emergency_contact', 'admission_date', 'status',
+    ];
+
+    protected $casts = [
+        'date_of_birth' => 'date',
+        'admission_date' => 'date',
+    ];
 
     public function user()
     {
@@ -21,6 +32,22 @@ class Student extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'Y');
+    }
+
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+                ->orWhere('student_id_number', 'like', "%{$search}%")
+                ->orWhere('roll_no', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('mobile', 'like', "%{$search}%");
+        });
     }
 
     public function session(){

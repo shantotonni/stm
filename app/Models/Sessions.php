@@ -16,7 +16,6 @@ class Sessions extends Model
         'from_period' => 'date',
         'to_period' => 'date',
         'is_current' => 'boolean',
-        'is_active' => 'enum'
     ];
 
     public function students()

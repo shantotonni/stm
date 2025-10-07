@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\HostelFee;
+namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class HostelFeeRequest extends FormRequest
+class UpdateStudentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -13,7 +13,7 @@ class HostelFeeRequest extends FormRequest
      */
     public function authorize()
     {
-        return true;
+        return false;
     }
 
     /**
@@ -24,12 +24,7 @@ class HostelFeeRequest extends FormRequest
     public function rules()
     {
         return [
-            'received_from'=>'required|min:3',
-            'batch_number'=>'required',
-            'roll_no'=>'required',
-            //'student_id'=>'required',
-            'session_id'=>'required',
-            'category'=>'required',
+            //
         ];
     }
 }

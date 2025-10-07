@@ -47,10 +47,6 @@ class User extends Authenticatable implements JWTSubject
         $this->attributes['is_active'] = $value ? 'Y' : 'N';
     }
 
-    public function getIsChangePasswordAttribute($value)
-    {
-        return $value === 'N';
-    }
 
     public function setIsChangePasswordAttribute($value)
     {

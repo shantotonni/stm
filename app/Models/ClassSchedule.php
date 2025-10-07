@@ -15,8 +15,6 @@ class ClassSchedule extends Model
     ];
 
     protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
         'is_active' => 'boolean'
     ];
 
@@ -43,5 +41,28 @@ class ClassSchedule extends Model
     public function classes()
     {
         return $this->hasMany(Classes::class, 'schedule_id');
+    }
+
+    public static function getDayLabels()
+    {
+        return [
+            'monday' => 'Monday',
+            'tuesday' => 'Tuesday',
+            'wednesday' => 'Wednesday',
+            'thursday' => 'Thursday',
+            'friday' => 'Friday',
+            'saturday' => 'Saturday',
+            'sunday' => 'Sunday'
+        ];
+    }
+
+    public static function getClassTypeLabels()
+    {
+        return [
+            'lecture' => 'Lecture',
+            'practical' => 'Practical',
+            'tutorial' => 'Tutorial',
+            'seminar' => 'Seminar'
+        ];
     }
 }
