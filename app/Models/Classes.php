@@ -14,11 +14,6 @@ class Classes extends Model
         'topic', 'description', 'status', 'created_by'
     ];
 
-    protected $casts = [
-        'class_date' => 'date',
-        'actual_start_time' => 'datetime',
-        'actual_end_time' => 'datetime'
-    ];
 
     public function schedule()
     {
@@ -38,6 +33,18 @@ class Classes extends Model
     public function materials()
     {
         return $this->hasMany(ClassMaterial::class, 'class_id');
+    }
+
+    // Scope for filtering by status
+    public function scopeByStatus($query, $status)
+    {
+        return $query->where('status', $status);
+    }
+
+    // Scope for filtering by date
+    public function scopeByDate($query, $date)
+    {
+        return $query->whereDate('class_date', $date);
     }
 
 }

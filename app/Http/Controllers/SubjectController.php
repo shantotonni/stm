@@ -10,7 +10,7 @@ class SubjectController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Subject::with('department');
+        return $query = Subject::with('department')->get();
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -41,6 +41,7 @@ class SubjectController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:20|unique:subjects,code',
             'department_id' => 'required|exists:departments,id',
+            'program_id' => 'required|exists:programs,id',
             'year' => 'required|in:1st,2nd,3rd,4th,5th',
             'semester' => 'required|in:1st,2nd',
             'credit_hours' => 'nullable|integer|min:0',
@@ -76,6 +77,7 @@ class SubjectController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:20|unique:subjects,code,' . $id,
             'department_id' => 'required|exists:departments,id',
+            'program_id' => 'required|exists:programs,id',
             'year' => 'required|in:1st,2nd,3rd,4th,5th',
             'semester' => 'required|in:1st,2nd',
             'credit_hours' => 'nullable|integer|min:0',

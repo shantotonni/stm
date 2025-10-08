@@ -1,12 +1,17 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassScheduleController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
+use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\EvaluationStatementController;
+use App\Http\Controllers\ExamAttendanceController;
+use App\Http\Controllers\ExamController;
+use App\Http\Controllers\ExamResultController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MenuPermissionController;
 use App\Http\Controllers\PermissionController;
@@ -225,12 +230,78 @@ Route::middleware(['jwt:api'])->group(function () {
         Route::delete('/{id}', [ClassScheduleController::class, 'destroy']);
     });
 
+    Route::prefix('classes')->group(function () {
+        Route::get('/', [ClassController::class, 'index']);
+        Route::post('/', [ClassController::class, 'store']);
+        Route::get('/statuses', [ClassController::class, 'getStatuses']);
+        Route::get('/schedules', [ClassController::class, 'getSchedules']);
+        Route::get('/daily-class-generate', [ClassController::class, 'dailyClassGenerate']);
+        Route::get('/{id}', [ClassController::class, 'show']);
+        Route::put('/{id}', [ClassController::class, 'update']);
+        Route::delete('/{id}', [ClassController::class, 'destroy']);
+    });
+
+    // Enrollment Routes
+    Route::prefix('enrollments')->group(function () {
+        Route::get('/', [EnrollmentController::class, 'index']);
+        Route::post('/', [EnrollmentController::class, 'store']);
+        Route::get('/{id}', [EnrollmentController::class, 'show']);
+        Route::put('/{id}', [EnrollmentController::class, 'update']);
+        Route::delete('/{id}', [EnrollmentController::class, 'destroy']);
+
+        // Additional routes
+        Route::post('/bulk-enroll', [EnrollmentController::class, 'bulkEnroll']);
+        Route::get('/statistics/all', [EnrollmentController::class, 'statistics']);
+    });
+
+    // Exam Management Routes
+    Route::prefix('exams')->group(function () {
+        Route::get('/', [ExamController::class, 'index']);
+        Route::get('/upcoming', [ExamController::class, 'upcoming']);
+        Route::post('/', [ExamController::class, 'store']);
+        Route::get('/{id}', [ExamController::class, 'show']);
+        Route::put('/{id}', [ExamController::class, 'update']);
+        Route::delete('/{id}', [ExamController::class, 'destroy']);
+        Route::post('/{id}/cancel', [ExamController::class, 'cancel']);
+
+        // Schedule routes
+        Route::get('/schedule/department', [ExamController::class, 'schedule']);
+        Route::get('/schedule/student/{studentId}', [ExamController::class, 'studentSchedule']);
+        Route::get('/schedule/teacher/{teacherId}', [ExamController::class, 'teacherSchedule']);
+    });
+
+    // Exam Results Routes
+    Route::prefix('results')->group(function () {
+        Route::post('/', [ExamResultController::class, 'store']);
+        Route::post('/bulk', [ExamResultController::class, 'bulkStore']);
+        Route::get('/exam/{examId}', [ExamResultController::class, 'examResults']);
+        Route::get('/student/{studentId}', [ExamResultController::class, 'studentResults']);
+        Route::put('/{id}', [ExamResultController::class, 'update']);
+    });
+
+    // Attendance Routes
+    Route::prefix('attendance')->group(function () {
+        Route::post('/check-in', [ExamAttendanceController::class, 'checkIn']);
+        Route::post('/{id}/check-out', [ExamAttendanceController::class, 'checkOut']);
+        Route::get('/exam/{examId}', [ExamAttendanceController::class, 'examAttendance']);
+    });
+
+    // Exam CRUD routes
+    Route::apiResource('exams', ExamController::class);
+
+    // Get dropdown data for form
+    Route::get('exams-dropdown-data', [ExamController::class, 'getDropdownData']);
+
+
     //common route
     Route::get('/get-session', [CommonController::class, 'getAllSession']);
     Route::get('/get-category', [CommonController::class, 'getAllCategory']);
     Route::get('/get-departments', [CommonController::class, 'getDepartments']);
     Route::get('/designations', [CommonController::class, 'getDesignations']);
     Route::get('/teacher-users', [CommonController::class, 'getUsers']);
+    Route::get('/get-program', [CommonController::class, 'getProgram']);
+    Route::get('/get-students', [CommonController::class, 'getStudents']);
+    Route::get('/get-subjects', [CommonController::class, 'getAllSubject']);
 
 
 });

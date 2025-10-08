@@ -10,17 +10,17 @@ class StudentEnrollment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'student_id', 'subject_id', 'session_id', 'enrollment_date', 'is_active'
+        'student_id', 'program_id', 'session_id', 'subject_id', 'enrollment_date', 'is_active'
     ];
 
-    protected $casts = [
-        'enrollment_date' => 'date',
-        'is_active' => 'boolean'
-    ];
 
     public function student()
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function program() {
+        return $this->belongsTo(Program::class);
     }
 
     public function subject()

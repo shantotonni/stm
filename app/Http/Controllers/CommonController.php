@@ -13,6 +13,7 @@ use App\Models\EvaluationStatement;
 use App\Models\HostelFee;
 use App\Models\Menu;
 use App\Models\Miscellanious;
+use App\Models\Program;
 use App\Models\Purpose;
 use App\Models\Role;
 use App\Models\Sessions;
@@ -65,10 +66,7 @@ class CommonController extends Controller
     }
 
     public function getAllSubject(){
-        return response()->json([
-            'status' => 'success',
-            'subjects' => Subject::all(),
-        ]);
+        return response()->json(Subject::all());
     }
 
     public function getAllStatement(){
@@ -99,27 +97,36 @@ class CommonController extends Controller
         ]);
     }
 
-    // Get all departments for dropdown
     public function getDepartments()
     {
         $departments = Department::where('is_active', 1)->get(['id', 'name']);
         return response()->json($departments);
     }
 
-    // Get all designations for dropdown
     public function getDesignations()
     {
         $designations = Designation::all();
         return response()->json($designations);
     }
 
-    // Get all users (for teacher assignment)
     public function getUsers()
     {
         $users = \App\Models\User::where('user_type', 'teacher')
             ->where('is_active', 'Y')
             ->get(['id', 'name', 'login_code']);
         return response()->json($users);
+    }
+
+    public function getProgram()
+    {
+        $programs = Program::query()->get(['id', 'name']);
+        return response()->json($programs);
+    }
+
+    public function getStudents()
+    {
+        $students = Student::select('id', 'name', 'roll_no', 'email')->get();
+        return response()->json($students);
     }
 
 }

@@ -16,28 +16,28 @@ class ClassScheduleController extends Controller
     {
         $query = ClassSchedule::with(['subject', 'teacher', 'classroom', 'session']);
 
-        if ($request->has('day_of_week') && $request->day_of_week !== '') {
+        if ($request->filled('day_of_week') && $request->day_of_week !== '') {
             $query->where('day_of_week', $request->day_of_week);
         }
-        if ($request->has('subject_id')) {
+        if ($request->filled('subject_id')) {
             $query->where('subject_id', $request->subject_id);
         }
-        if ($request->has('teacher_id')) {
+        if ($request->filled('teacher_id')) {
             $query->where('teacher_id', $request->teacher_id);
         }
-        if ($request->has('classroom_id')) {
+        if ($request->filled('classroom_id')) {
             $query->where('classroom_id', $request->classroom_id);
         }
-        if ($request->has('session_id')) {
+        if ($request->filled('session_id')) {
             $query->where('session_id', $request->session_id);
         }
-        if ($request->has('class_type') && $request->class_type !== '') {
+        if ($request->filled('class_type') && $request->class_type !== '') {
             $query->where('class_type', $request->class_type);
         }
-        if ($request->has('is_active') && $request->is_active !== '') {
+        if ($request->filled('is_active') && $request->is_active !== '') {
             $query->where('is_active', $request->is_active);
         }
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->whereHas('subject', function($sq) use ($search) {

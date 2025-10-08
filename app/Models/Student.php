@@ -13,7 +13,7 @@ class Student extends Model
     public $primaryKey = 'id';
     protected $fillable = [
         'user_id', 'department_id', 'name', 'student_id_number', 'roll_no',
-        'email', 'mobile', 'session', 'session_id', 'category_id', 'category',
+        'email', 'mobile', 'session', 'session_id', 'category_id','program_id', 'category',
         'year', 'semester', 'is_hostel', 'nationality', 'address', 'nid',
         'date_of_birth', 'batch', 'blood_group', 'guardian_name',
         'guardian_phone', 'emergency_contact', 'admission_date', 'status',
