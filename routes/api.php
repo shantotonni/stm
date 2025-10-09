@@ -306,18 +306,30 @@ Route::middleware(['jwt:api'])->group(function () {
         Route::get('/subject/{subjectId}/teachers', [TeacherSubjectController::class, 'subjectTeachers']);
     });
 
-    Route::prefix('exam-students')->group(function () {
+    Route::prefix('exams/{exam_id}/students')->group(function () {
+        // Get all students for an exam
         Route::get('/', [ExamStudentController::class, 'index']);
-        Route::get('statistics/{examId}', [ExamStudentController::class, 'statistics']);
-        Route::get('available-students', [ExamStudentController::class, 'availableStudents']);
-        Route::post('bulk-assign', [ExamStudentController::class, 'bulkAssign']);
-        Route::post('auto-assign', [ExamStudentController::class, 'autoAssign']);
-        Route::patch('{id}/attendance', [ExamStudentController::class, 'updateAttendance']);
-        Route::post('bulk-attendance', [ExamStudentController::class, 'bulkUpdateAttendance']);
-        Route::patch('{id}/seat', [ExamStudentController::class, 'updateSeat']);
-        Route::post('auto-assign-seats', [ExamStudentController::class, 'autoAssignSeats']);
-        Route::delete('{id}', [ExamStudentController::class, 'destroy']);
-        Route::post('bulk-destroy', [ExamStudentController::class, 'bulkDestroy']);
+
+        // Get available students (not assigned)
+        Route::get('/available', [ExamStudentController::class, 'availableStudents']);
+
+        // Get statistics
+        Route::get('/statistics', [ExamStudentController::class, 'statistics']);
+
+        // Assign students to exam (bulk)
+        Route::post('/assign', [ExamStudentController::class, 'assignStudents']);
+
+        // Auto-generate seat numbers
+        Route::post('/generate-seats', [ExamStudentController::class, 'autoGenerateSeats']);
+
+        // Bulk update attendance
+        Route::post('/bulk-attendance', [ExamStudentController::class, 'bulkUpdateAttendance']);
+
+        // Update single student
+        Route::put('/{id}', [ExamStudentController::class, 'update']);
+
+        // Remove student from exam
+        Route::delete('/{id}', [ExamStudentController::class, 'destroy']);
     });
 
 
