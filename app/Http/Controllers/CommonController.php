@@ -6,10 +6,12 @@ use App\Http\Resources\Student\StudentCollection;
 use App\Models\Bank;
 use App\Models\Branch;
 use App\Models\Category;
+use App\Models\Classroom;
 use App\Models\Currency;
 use App\Models\Department;
 use App\Models\Designation;
 use App\Models\EvaluationStatement;
+use App\Models\ExamType;
 use App\Models\HostelFee;
 use App\Models\Menu;
 use App\Models\Miscellanious;
@@ -27,6 +29,7 @@ use App\Models\Year;
 use App\Services\BusinessService;
 use App\Services\DepartmentService;
 use App\Services\RoleService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -65,8 +68,17 @@ class CommonController extends Controller
         ]);
     }
 
-    public function getAllSubject(){
-        return response()->json(Subject::all());
+    public function getAllSubject(Request $request){
+        $query = Subject::query();
+        if ($request->filled('department_id') && !empty($request->department_id)) {
+            $query->where('department_id', $request->department_id);
+        }
+        $subjects = $query->get();
+        return response()->json($subjects);
+    }
+
+    public function getAllExamType(){
+        return response()->json(ExamType::all());
     }
 
     public function getAllStatement(){
@@ -84,10 +96,8 @@ class CommonController extends Controller
     }
 
     public function getAllTeacher(){
-        $teachers = User::query()->where('role_id',4)->get();
-        return response()->json([
-           'teachers' => $teachers
-        ]);
+        $teachers = Teacher::query()->get();
+        return response()->json($teachers);
     }
 
     public function getAllYear(){
@@ -111,7 +121,7 @@ class CommonController extends Controller
 
     public function getUsers()
     {
-        $users = \App\Models\User::where('user_type', 'teacher')
+        $users = User::where('user_type', 'teacher')
             ->where('is_active', 'Y')
             ->get(['id', 'name', 'login_code']);
         return response()->json($users);
@@ -127,6 +137,41 @@ class CommonController extends Controller
     {
         $students = Student::select('id', 'name', 'roll_no', 'email')->get();
         return response()->json($students);
+    }
+
+    public function getTeachersBySubject(Subject $subject): JsonResponse
+    {
+        $teachers = $subject->teachers()
+            ->with('designation:id,name')
+            ->select('teachers.id', 'teachers.name', 'teachers.email', 'teachers.designation_id')
+            ->orderBy('teachers.name', 'asc')
+            ->get();
+        return response()->json($teachers, 200);
+    }
+
+    public function show(Teacher $teacher): JsonResponse
+    {
+        try {
+            $teacher->load(['department', 'subjects']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $teacher,
+                'message' => 'Teacher details fetched successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch teacher details',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getAllClassRoom(){
+        $class_room = Classroom::query()->where('is_available',1)->get();
+        return response()->json($class_room);
     }
 
 }

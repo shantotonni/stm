@@ -17,6 +17,10 @@ class ExamNotification extends Model
         'sent_at'
     ];
 
+    protected $casts = [
+        'sent_at' => 'datetime'
+    ];
+
     public function exam(): BelongsTo
     {
         return $this->belongsTo(Exam::class);

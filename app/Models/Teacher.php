@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Teacher extends Model
 {
@@ -57,8 +59,48 @@ class Teacher extends Model
     public function subjects()
     {
         return $this->belongsToMany(Subject::class, 'teacher_subjects')
-            ->withPivot('session_id', 'is_coordinator')
+            ->withPivot('session_id', 'is_coordinator','academic_year', 'is_primary')
             ->withTimestamps();
+    }
+
+    public function teacherSubjects(): HasMany
+    {
+        return $this->hasMany(TeacherSubject::class);
+    }
+
+    public function subjectsForSession($sessionId)
+    {
+        return $this->subjects()
+            ->wherePivot('session_id', $sessionId)
+            ->get();
+    }
+
+    public function supervisedExams(): BelongsToMany
+    {
+        return $this->belongsToMany(Exam::class, 'exam_supervisors')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    public function subjectsForYear($year)
+    {
+        return $this->subjects()
+            ->wherePivot('academic_year', $year)
+            ->get();
+    }
+
+    public function coordinatorSubjects()
+    {
+        return $this->subjects()
+            ->wherePivot('is_coordinator', 1)
+            ->get();
+    }
+
+    public function primarySubjects()
+    {
+        return $this->subjects()
+            ->wherePivot('is_primary', 1)
+            ->get();
     }
 
     public function classSchedules()
@@ -79,6 +121,11 @@ class Teacher extends Model
     public function materials()
     {
         return $this->hasMany(ClassMaterial::class);
+    }
+
+    public function exams(): HasMany
+    {
+        return $this->hasMany(Exam::class);
     }
 
 }

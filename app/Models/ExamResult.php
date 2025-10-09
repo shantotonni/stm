@@ -20,6 +20,12 @@ class ExamResult extends Model
         'evaluated_at'
     ];
 
+    protected $casts = [
+        'marks_obtained' => 'decimal:2',
+        'evaluated_at' => 'datetime'
+    ];
+
+
     public function exam(): BelongsTo
     {
         return $this->belongsTo(Exam::class);

@@ -18,18 +18,19 @@ class Exam extends Model
         'teacher_id',
         'session_id',
         'department_id',
+        'classroom_id',
         'title',
         'exam_date',
         'start_time',
         'end_time',
         'duration_minutes',
-        'classroom_id',
         'total_marks',
         'pass_marks',
         'semester',
         'year',
         'instructions',
         'status',
+        'syllabus_topics',
         'created_by'
     ];
 

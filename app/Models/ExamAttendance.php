@@ -21,6 +21,11 @@ class ExamAttendance extends Model
         'notes'
     ];
 
+    protected $casts = [
+        'check_in_time' => 'datetime',
+        'check_out_time' => 'datetime'
+    ];
+
     public function exam(): BelongsTo
     {
         return $this->belongsTo(Exam::class);

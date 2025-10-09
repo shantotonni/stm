@@ -197,8 +197,10 @@ class ExamController extends Controller
 
         if ($request->has('exam_date') || $request->has('start_time')) {
             $exam->notifications()->create([
-                'notification_type' => 'reminder',
-                'message' => "Exam updated: {$exam->title}. New date: {$exam->exam_date->format('d M Y')} at {$exam->start_time->format('h:i A')}"
+                'notification_type' => 'schedule',
+                'message' => "Exam scheduled: {$exam->title} on " .
+                    Carbon::parse($exam->exam_date)->format('d M Y') .
+                    " at " . Carbon::parse($exam->start_time)->format('h:i A')
             ]);
         }
 

@@ -12,6 +12,7 @@ use App\Http\Controllers\EvaluationStatementController;
 use App\Http\Controllers\ExamAttendanceController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\ExamResultController;
+use App\Http\Controllers\ExamStudentController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MenuPermissionController;
 use App\Http\Controllers\PermissionController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\TeacherSubjectController;
 use App\Http\Controllers\TeacherSurveyController;
 use Illuminate\Support\Facades\Route;
 use \App\Http\Controllers\AuthController;
@@ -179,8 +181,6 @@ Route::middleware(['jwt:api'])->group(function () {
         Route::delete('/{id}', [TeacherController::class, 'destroy']);
     });
 
-
-
     Route::prefix('students')->group(function () {
         Route::get('/', [StudentController::class, 'index']);
         Route::post('/', [StudentController::class, 'store']);
@@ -287,10 +287,38 @@ Route::middleware(['jwt:api'])->group(function () {
     });
 
     // Exam CRUD routes
-    Route::apiResource('exams', ExamController::class);
+    //Route::apiResource('exams', ExamController::class);
 
     // Get dropdown data for form
     Route::get('exams-dropdown-data', [ExamController::class, 'getDropdownData']);
+
+
+    Route::prefix('teacher-subjects')->group(function () {
+        Route::get('/', [TeacherSubjectController::class, 'index']);
+        Route::get('/create', [TeacherSubjectController::class, 'create']);
+        Route::post('/', [TeacherSubjectController::class, 'store']);
+        Route::post('/bulk-assign', [TeacherSubjectController::class, 'bulkAssign']);
+        Route::post('/sync/{teacherId}', [TeacherSubjectController::class, 'syncSubjects']);
+        Route::get('/{id}', [TeacherSubjectController::class, 'show']);
+        Route::put('/{id}', [TeacherSubjectController::class, 'update']);
+        Route::delete('/{id}', [TeacherSubjectController::class, 'destroy']);
+        Route::get('/teacher/{teacherId}/subjects', [TeacherSubjectController::class, 'teacherSubjects']);
+        Route::get('/subject/{subjectId}/teachers', [TeacherSubjectController::class, 'subjectTeachers']);
+    });
+
+    Route::prefix('exam-students')->group(function () {
+        Route::get('/', [ExamStudentController::class, 'index']);
+        Route::get('statistics/{examId}', [ExamStudentController::class, 'statistics']);
+        Route::get('available-students', [ExamStudentController::class, 'availableStudents']);
+        Route::post('bulk-assign', [ExamStudentController::class, 'bulkAssign']);
+        Route::post('auto-assign', [ExamStudentController::class, 'autoAssign']);
+        Route::patch('{id}/attendance', [ExamStudentController::class, 'updateAttendance']);
+        Route::post('bulk-attendance', [ExamStudentController::class, 'bulkUpdateAttendance']);
+        Route::patch('{id}/seat', [ExamStudentController::class, 'updateSeat']);
+        Route::post('auto-assign-seats', [ExamStudentController::class, 'autoAssignSeats']);
+        Route::delete('{id}', [ExamStudentController::class, 'destroy']);
+        Route::post('bulk-destroy', [ExamStudentController::class, 'bulkDestroy']);
+    });
 
 
     //common route
@@ -302,6 +330,11 @@ Route::middleware(['jwt:api'])->group(function () {
     Route::get('/get-program', [CommonController::class, 'getProgram']);
     Route::get('/get-students', [CommonController::class, 'getStudents']);
     Route::get('/get-subjects', [CommonController::class, 'getAllSubject']);
+    Route::get('/get-exam-types', [CommonController::class, 'getAllExamType']);
+    Route::get('/get-teacher', [CommonController::class, 'getAllTeacher']);
+    Route::get('/get-classroom', [CommonController::class, 'getAllClassRoom']);
+    Route::get('/teachers/{teacher}', [CommonController::class, 'show']);
+    Route::get('/subjects/{subject}/teachers', [CommonController::class, 'getTeachersBySubject']);
 
 
 });

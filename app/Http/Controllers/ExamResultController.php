@@ -118,8 +118,8 @@ class ExamResultController extends Controller
 
         $stats = [
             'total_students' => $results->count(),
-            'passed' => $results->where('marks_obtained', '>=', $exam->passing_marks)->count(),
-            'failed' => $results->where('marks_obtained', '<', $exam->passing_marks)->count(),
+            'passed' => $results->where('marks_obtained', '>=', $exam->pass_marks)->count(),
+            'failed' => $results->where('marks_obtained', '<', $exam->pass_marks)->count(),
             'average_marks' => $results->avg('marks_obtained'),
             'highest_marks' => $results->max('marks_obtained'),
             'lowest_marks' => $results->min('marks_obtained')
