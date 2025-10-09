@@ -270,6 +270,36 @@ Route::middleware(['jwt:api'])->group(function () {
         Route::get('/schedule/teacher/{teacherId}', [ExamController::class, 'teacherSchedule']);
     });
 
+    Route::prefix('exams/{exam}/students')->group(function () {
+        // Get all enrolled students
+        Route::get('/', [ExamStudentController::class, 'index']);
+
+        // Add single student
+        Route::post('/', [ExamStudentController::class, 'store']);
+
+        // Bulk add students by year/semester (MAIN FUNCTION)
+        Route::post('/bulk/assign', [ExamStudentController::class, 'bulkAssign']);
+
+        // Advanced bulk assign with filters
+        Route::post('/bulk/assign/advanced', [ExamStudentController::class, 'bulkAssignAdvanced']);
+
+        // Preview before bulk assign
+        Route::get('/bulk/preview', [ExamStudentController::class, 'bulkAssignPreview']);
+
+        // Auto assign seats
+        Route::post('/assign-seats', [ExamStudentController::class, 'assignSeats']);
+
+        // Get available students (not yet enrolled)
+        Route::get('/available', [ExamStudentController::class, 'availableStudents']);
+
+        // Update student (seat, eligibility)
+        Route::put('/{student}', [ExamStudentController::class, 'update']);
+
+        // Remove student from exam
+        Route::delete('/{student}', [ExamStudentController::class, 'destroy']);
+    });
+
+
     // Exam Results Routes
     Route::prefix('results')->group(function () {
         Route::post('/', [ExamResultController::class, 'store']);
@@ -306,31 +336,6 @@ Route::middleware(['jwt:api'])->group(function () {
         Route::get('/subject/{subjectId}/teachers', [TeacherSubjectController::class, 'subjectTeachers']);
     });
 
-    Route::prefix('exams/{exam_id}/students')->group(function () {
-        // Get all students for an exam
-        Route::get('/', [ExamStudentController::class, 'index']);
-
-        // Get available students (not assigned)
-        Route::get('/available', [ExamStudentController::class, 'availableStudents']);
-
-        // Get statistics
-        Route::get('/statistics', [ExamStudentController::class, 'statistics']);
-
-        // Assign students to exam (bulk)
-        Route::post('/assign', [ExamStudentController::class, 'assignStudents']);
-
-        // Auto-generate seat numbers
-        Route::post('/generate-seats', [ExamStudentController::class, 'autoGenerateSeats']);
-
-        // Bulk update attendance
-        Route::post('/bulk-attendance', [ExamStudentController::class, 'bulkUpdateAttendance']);
-
-        // Update single student
-        Route::put('/{id}', [ExamStudentController::class, 'update']);
-
-        // Remove student from exam
-        Route::delete('/{id}', [ExamStudentController::class, 'destroy']);
-    });
 
 
     //common route
