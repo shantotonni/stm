@@ -128,4 +128,9 @@ class Teacher extends Model
         return $this->hasMany(Exam::class);
     }
 
+    public function chiefExams()
+    {
+        return $this->exams()->wherePivot('role', 'chief');
+    }
+
 }

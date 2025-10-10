@@ -14,7 +14,7 @@ class ExamController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Exam::with(['subject', 'examType', 'teacher', 'department', 'classroom', 'session']);
+        $query = Exam::with(['subject', 'examType', 'teacher', 'department', 'classroom', 'session'])->withCount('examStudents');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -49,7 +49,6 @@ class ExamController extends Controller
         if ($request->filled('end_date')) {
             $query->where('exam_date', '<=', $request->end_date);
         }
-
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }

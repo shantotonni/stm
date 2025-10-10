@@ -76,9 +76,24 @@ class Exam extends Model
             ->withTimestamps();
     }
 
+    public function examStudents()
+    {
+        return $this->hasMany(ExamStudent::class);
+    }
+
+    public function studentCount()
+    {
+        return $this->examStudents()->count();
+    }
+
     public function results(): HasMany
     {
         return $this->hasMany(ExamResult::class);
+    }
+
+    public function publishedResults()
+    {
+        return $this->results()->published();
     }
 
     public function supervisors(): BelongsToMany
@@ -150,6 +165,21 @@ class Exam extends Model
     public function getIsUpcomingAttribute()
     {
         return $this->exam_date >= now()->toDateString() && $this->status === 'scheduled';
+    }
+
+    public function chiefSupervisors()
+    {
+        return $this->supervisors()->wherePivot('role', 'chief');
+    }
+
+    public function assistantSupervisors()
+    {
+        return $this->supervisors()->wherePivot('role', 'assistant');
+    }
+
+    public function invigilators()
+    {
+        return $this->supervisors()->wherePivot('role', 'invigilator');
     }
 
 }

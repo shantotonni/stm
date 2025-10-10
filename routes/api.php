@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ClassroomController;
@@ -12,11 +13,14 @@ use App\Http\Controllers\EvaluationStatementController;
 use App\Http\Controllers\ExamAttendanceController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\ExamResultController;
+use App\Http\Controllers\ExamStatusController;
 use App\Http\Controllers\ExamStudentController;
+use App\Http\Controllers\ExamSupervisorController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MenuPermissionController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ResultController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SessionsController;
 use App\Http\Controllers\StudentAuthController;
@@ -264,6 +268,15 @@ Route::middleware(['jwt:api'])->group(function () {
         Route::delete('/{id}', [ExamController::class, 'destroy']);
         Route::post('/{id}/cancel', [ExamController::class, 'cancel']);
 
+        Route::post('/{examId}/start', [ExamStatusController::class, 'startExam']);
+        Route::post('/{examId}/complete', [ExamStatusController::class, 'completeExam']);
+        Route::post('/{examId}/cancel', [ExamStatusController::class, 'cancelExam']);
+        Route::post('/{examId}/reopen', [ExamStatusController::class, 'reopenExam']);
+        Route::get('/{examId}/available-transitions', [ExamStatusController::class, 'availableTransitions']);
+
+        // Auto-update (can be called manually or via cron)
+        Route::get('/auto-update-status', [ExamStatusController::class, 'autoUpdateStatuses']);
+
         // Schedule routes
         Route::get('/schedule/department', [ExamController::class, 'schedule']);
         Route::get('/schedule/student/{studentId}', [ExamController::class, 'studentSchedule']);
@@ -313,15 +326,13 @@ Route::middleware(['jwt:api'])->group(function () {
     Route::prefix('attendance')->group(function () {
         Route::post('/check-in', [ExamAttendanceController::class, 'checkIn']);
         Route::post('/{id}/check-out', [ExamAttendanceController::class, 'checkOut']);
-        Route::get('/exam/{examId}', [ExamAttendanceController::class, 'examAttendance']);
+//        Route::get('/exam/{examId}', [ExamAttendanceController::class, 'examAttendance']);
+        Route::get('/exam/{examId}', [ExamAttendanceController::class, 'getExamAttendance']);
+        Route::post('/mark-absent', [ExamAttendanceController::class, 'markAbsent']);
     });
-
-    // Exam CRUD routes
-    //Route::apiResource('exams', ExamController::class);
 
     // Get dropdown data for form
     Route::get('exams-dropdown-data', [ExamController::class, 'getDropdownData']);
-
 
     Route::prefix('teacher-subjects')->group(function () {
         Route::get('/', [TeacherSubjectController::class, 'index']);
@@ -336,6 +347,58 @@ Route::middleware(['jwt:api'])->group(function () {
         Route::get('/subject/{subjectId}/teachers', [TeacherSubjectController::class, 'subjectTeachers']);
     });
 
+
+    // Exam Supervisor Routes
+    Route::prefix('exams/{examId}/supervisors')->group(function () {
+        Route::get('/', [ExamSupervisorController::class, 'index']);
+        Route::post('/', [ExamSupervisorController::class, 'store']);
+        Route::put('/{supervisorId}', [ExamSupervisorController::class, 'update']);
+        Route::delete('/{supervisorId}', [ExamSupervisorController::class, 'destroy']);
+        Route::post('/bulk', [ExamSupervisorController::class, 'bulkStore']);
+    });
+
+    // Get available teachers for an exam
+    Route::get('/exams/{examId}/available-teachers', [ExamSupervisorController::class, 'availableTeachers']);
+
+
+    // Exam Results Routes
+    Route::prefix('results')->group(function () {
+        // Get results for an exam
+        Route::get('/exam/{examId}', [ResultController::class, 'getExamResults']);
+
+        // Bulk save results
+        Route::post('/bulk', [ResultController::class, 'bulkStore']);
+
+        // Single result operations
+        Route::post('/', [ResultController::class, 'store']);
+        Route::put('/{resultId}', [ResultController::class, 'update']);
+        Route::delete('/{resultId}', [ResultController::class, 'destroy']);
+
+        // Grade distribution
+        Route::get('/exam/{examId}/grade-distribution', [ResultController::class, 'gradeDistribution']);
+
+        // Student specific result
+        Route::get('/student/{studentId}/exam/{examId}', [ResultController::class, 'studentResult']);
+
+        // Publish/Unpublish results
+        Route::post('/exam/{examId}/publish', [ResultController::class, 'publishResults']);
+    });
+    Route::get('/exams/{examId}/students', [ResultController::class, 'getExamStudents']);
+
+
+    Route::prefix('attendance')->group(function () {
+        // Get today's scheduled classes
+        Route::get('/today-classes', [AttendanceController::class, 'getTodayClasses']);
+
+        // Get students for a specific class
+        Route::get('/class/{classId}/students', [AttendanceController::class, 'getClassStudents']);
+
+        // Save attendance
+        Route::post('/save', [AttendanceController::class, 'saveAttendance']);
+
+        // Get attendance report
+        Route::get('/report', [AttendanceController::class, 'getAttendanceReport']);
+    });
 
 
     //common route

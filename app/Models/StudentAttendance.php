@@ -14,7 +14,9 @@ class StudentAttendance extends Model
     ];
 
     protected $casts = [
-        'marked_at' => 'datetime'
+        'marked_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function class()
@@ -30,5 +32,41 @@ class StudentAttendance extends Model
     public function markedBy()
     {
         return $this->belongsTo(User::class, 'marked_by');
+    }
+
+    public function scopeDateRange($query, $startDate, $endDate)
+    {
+        return $query->whereBetween('marked_at', [$startDate, $endDate]);
+    }
+
+    public function scopeForClass($query, $classId)
+    {
+        return $query->where('class_id', $classId);
+    }
+
+    public function scopeForStudent($query, $studentId)
+    {
+        return $query->where('student_id', $studentId);
+    }
+
+    public function scopeToday($query)
+    {
+        return $query->whereDate('marked_at', today());
+    }
+
+    public static function getAttendancePercentage($studentId, $classId, $startDate, $endDate)
+    {
+        $total = self::where('student_id', $studentId)
+            ->where('class_id', $classId)
+            ->whereBetween('marked_at', [$startDate, $endDate])
+            ->count();
+
+        $present = self::where('student_id', $studentId)
+            ->where('class_id', $classId)
+            ->where('attendance_status', 'present')
+            ->whereBetween('marked_at', [$startDate, $endDate])
+            ->count();
+
+        return $total > 0 ? round(($present / $total) * 100, 2) : 0;
     }
 }
