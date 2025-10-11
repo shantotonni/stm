@@ -14,6 +14,10 @@ class Classes extends Model
         'topic', 'description', 'status', 'created_by'
     ];
 
+    protected $casts = [
+        'class_date' => 'date',
+    ];
+
 
     public function schedule()
     {
@@ -45,6 +49,53 @@ class Classes extends Model
     public function scopeByDate($query, $date)
     {
         return $query->whereDate('class_date', $date);
+    }
+
+    public function students()
+    {
+        return $this->hasManyThrough(
+            Student::class,
+            StudentAttendance::class,
+            'class_id',
+            'id',
+            'id',
+            'student_id'
+        )->distinct();
+    }
+
+    public function scopeDateRange($query, $startDate, $endDate)
+    {
+        return $query->whereBetween('class_date', [$startDate, $endDate]);
+    }
+
+    public function hasAttendanceMarked(): bool
+    {
+        return $this->attendances()->exists();
+    }
+
+    public function getAttendanceSummary(): array
+    {
+        return StudentAttendance::getClassSummary($this->id);
+    }
+
+    // Get attendance statistics for this class
+    public function getAttendanceStatistics()
+    {
+        $statistics = $this->attendances()
+            ->selectRaw('attendance_status, COUNT(*) as count')
+            ->groupBy('attendance_status')
+            ->pluck('count', 'attendance_status');
+
+        $total = $statistics->sum();
+
+        return [
+            'present' => $statistics->get('present', 0),
+            'absent' => $statistics->get('absent', 0),
+            'late' => $statistics->get('late', 0),
+            'excused' => $statistics->get('excused', 0),
+            'total' => $total,
+            'present_percentage' => $total > 0 ? round(($statistics->get('present', 0) / $total) * 100, 2) : 0
+        ];
     }
 
 }

@@ -182,4 +182,22 @@ class Exam extends Model
         return $this->supervisors()->wherePivot('role', 'invigilator');
     }
 
+    // Calculate total marks automatically
+    public static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($result) {
+            $result->total_marks = ($result->theory_marks ?? 0) +
+                ($result->practical_marks ?? 0) +
+                ($result->viva_marks ?? 0);
+        });
+
+        static::updating(function ($result) {
+            $result->total_marks = ($result->theory_marks ?? 0) +
+                ($result->practical_marks ?? 0) +
+                ($result->viva_marks ?? 0);
+        });
+    }
+
 }

@@ -67,7 +67,7 @@ class Student extends Model
 
     public function attendances()
     {
-        return $this->hasMany(StudentAttendance::class);
+        return $this->hasMany(StudentAttendance::class,'student_id');
     }
 
     public function materialAccess()
@@ -99,4 +99,123 @@ class Student extends Model
     {
         return $this->hasMany(ExamAttendance::class);
     }
+
+    // Calculate attendance percentage for a date range
+    public function getAttendancePercentage($startDate = null, $endDate = null)
+    {
+        $query = $this->attendances();
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('marked_at', [$startDate, $endDate]);
+        }
+
+        $total = $query->count();
+
+        if ($total === 0) {
+            return 0;
+        }
+
+        $present = $query->whereIn('attendance_status', ['present', 'late'])->count();
+
+        return round(($present / $total) * 100, 2);
+    }
+
+    // Get attendance summary
+    public function getAttendanceSummary($startDate = null, $endDate = null)
+    {
+        $query = $this->attendances();
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('marked_at', [$startDate, $endDate]);
+        }
+
+        $summary = $query->selectRaw('
+            COUNT(*) as total_classes,
+            SUM(CASE WHEN attendance_status = "present" THEN 1 ELSE 0 END) as present,
+            SUM(CASE WHEN attendance_status = "absent" THEN 1 ELSE 0 END) as absent,
+            SUM(CASE WHEN attendance_status = "late" THEN 1 ELSE 0 END) as late,
+            SUM(CASE WHEN attendance_status = "excused" THEN 1 ELSE 0 END) as excused
+        ')->first();
+
+        return [
+            'total_classes' => $summary->total_classes ?? 0,
+            'present' => $summary->present ?? 0,
+            'absent' => $summary->absent ?? 0,
+            'late' => $summary->late ?? 0,
+            'excused' => $summary->excused ?? 0,
+            'attendance_percentage' => $this->getAttendancePercentage($startDate, $endDate)
+        ];
+    }
+
+    /**
+     * Calculate attendance percentage for a specific subject or overall
+     */
+    public function calculateAttendancePercentage($subjectId = null, $startDate = null, $endDate = null): array
+    {
+        $query = $this->attendances()
+            ->join('classes', 'student_attendances.class_id', '=', 'classes.id')
+            ->where('classes.status', 'completed');
+
+        if ($subjectId) {
+            $query->join('class_schedules', 'classes.schedule_id', '=', 'class_schedules.id')
+                ->where('class_schedules.subject_id', $subjectId);
+        }
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('classes.class_date', [$startDate, $endDate]);
+        }
+
+        $totalClasses = $query->count();
+        $attendedClasses = (clone $query)
+            ->whereIn('student_attendances.attendance_status', ['present', 'late'])
+            ->count();
+
+        $percentage = $totalClasses > 0 ? round(($attendedClasses / $totalClasses) * 100, 2) : 0;
+
+        return [
+            'student_id' => $this->id,
+            'student_name' => $this->full_name,
+            'roll_number' => $this->roll_number,
+            'total_classes' => $totalClasses,
+            'attended_classes' => $attendedClasses,
+            'absent_classes' => $totalClasses - $attendedClasses,
+            'percentage' => $percentage,
+            'is_eligible' => $percentage >= 75,
+            'status' => $percentage >= 75 ? 'eligible' : 'not_eligible',
+        ];
+    }
+
+    public function getMonthlyAttendance($year, $month): array
+    {
+        $attendances = $this->attendances()
+            ->join('classes', 'student_attendance.class_id', '=', 'classes.id')
+            ->whereYear('classes.class_date', $year)
+            ->whereMonth('classes.class_date', $month)
+            ->select('student_attendance.*', 'classes.class_date', 'classes.topic')
+            ->orderBy('classes.class_date')
+            ->get();
+
+        $summary = [
+            'total' => $attendances->count(),
+            'present' => $attendances->where('attendance_status', 'present')->count(),
+            'absent' => $attendances->where('attendance_status', 'absent')->count(),
+            'late' => $attendances->where('attendance_status', 'late')->count(),
+            'excused' => $attendances->where('attendance_status', 'excused')->count(),
+        ];
+
+        return [
+            'attendances' => $attendances,
+            'summary' => $summary,
+            'percentage' => $summary['total'] > 0
+                ? round((($summary['present'] + $summary['late']) / $summary['total']) * 100, 2)
+                : 0,
+        ];
+    }
+
+    public function scopeByDepartment($query, $departmentId)
+    {
+        return $query->where('department_id', $departmentId);
+    }
+
+
 }

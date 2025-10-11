@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -40,4 +41,33 @@ class Notice extends Model
             });
     }
 
+    public function getStatusBadgeAttribute()
+    {
+        if (!$this->is_active) {
+            return 'Inactive';
+        }
+        if ($this->is_expired) {
+            return 'Expired';
+        }
+        if (Carbon::parse($this->publish_date)->isFuture()) {
+            return 'Scheduled';
+        }
+        return 'Active';
+    }
+
+    public function scopeOfType($query, $type)
+    {
+        return $query->where('notice_type', $type);
+    }
+
+    /**
+     * Scope for filtering by audience
+     */
+    public function scopeForAudience($query, $audience)
+    {
+        return $query->where(function($q) use ($audience) {
+            $q->where('target_audience', 'all')
+                ->orWhere('target_audience', $audience);
+        });
+    }
 }

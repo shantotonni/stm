@@ -124,8 +124,58 @@ class User extends Authenticatable implements JWTSubject
     // Get user's accessible menus
     public function getAccessibleMenus()
     {
-
         return Menu::getMenuTree($this->id);
     }
+
+    public function results()
+    {
+        return $this->hasMany(ExamResult::class, 'student_id');
+    }
+
+    public function attendance()
+    {
+        return $this->hasMany(StudentAttendance::class, 'student_id');
+    }
+
+    public function enrolledClasses()
+    {
+        return $this->belongsToMany(ClassSchedule::class, 'class_enrollments', 'student_id', 'class_schedule_id');
+    }
+
+    // For teachers
+    public function taughtClasses()
+    {
+        return $this->hasMany(ClassSchedule::class, 'teacher_id');
+    }
+
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'teacher_subjects', 'teacher_id', 'subject_id');
+    }
+
+    public function students()
+    {
+        return $this->belongsToMany(User::class, 'teacher_students', 'teacher_id', 'student_id');
+    }
+
+//    public function isAdmin()
+//    {
+//        return $this->role === 'admin';
+//    }
+
+    public function isDepartmentHead()
+    {
+        return $this->role === 'department_head';
+    }
+
+//    public function isTeacher()
+//    {
+//        return $this->role === 'teacher';
+//    }
+//
+//    public function isStudent()
+//    {
+//        return $this->role === 'student';
+//    }
 
 }

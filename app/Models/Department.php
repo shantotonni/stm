@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Department extends Model
 {
@@ -49,6 +50,16 @@ class Department extends Model
     public function subjects()
     {
         return $this->hasMany(Subject::class);
+    }
+
+    public function notices()
+    {
+        return $this->hasMany(Notice::class);
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(ClassSchedule::class);
     }
 
     public function scopeSearch($query, $term)

@@ -6,6 +6,7 @@ use App\Models\Student;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
@@ -272,5 +273,57 @@ class ReportController extends Controller
             'details' => $query,
             'teacher' => $teacher,
         ]);
+    }
+
+    protected function getUserRole()
+    {
+        return Auth::user()->role;
+    }
+
+    protected function getUserDepartmentId()
+    {
+        return Auth::user()->department_id;
+    }
+
+    protected function getUserId()
+    {
+        return Auth::user()->id;
+    }
+
+    protected function isAdmin()
+    {
+        return $this->getUserRole() === 'admin';
+    }
+
+    protected function isDepartmentHead()
+    {
+        return $this->getUserRole() === 'department_head';
+    }
+
+    protected function isTeacher()
+    {
+        return $this->getUserRole() === 'teacher';
+    }
+
+    protected function isStudent()
+    {
+        return $this->getUserRole() === 'student';
+    }
+
+    protected function jsonResponse($data, $message = 'Success', $status = 200)
+    {
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => $data
+        ], $status);
+    }
+
+    protected function jsonError($message = 'Error', $status = 400)
+    {
+        return response()->json([
+            'success' => false,
+            'message' => $message,
+        ], $status);
     }
 }

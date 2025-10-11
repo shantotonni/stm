@@ -17,7 +17,7 @@ class ResultController extends Controller
             $exam = Exam::findOrFail($examId);
 
             // Get results with student information, ordered by marks (highest first)
-            $results = ExamResult::with(['student:id,name,student_id,roll_number'])
+            $results = ExamResult::with(['student', 'evaluator'])
                 ->where('exam_id', $examId)
                 ->orderBy('marks_obtained', 'desc')
                 ->get();
@@ -153,7 +153,6 @@ class ResultController extends Controller
                     'evaluated_by' => $request->evaluated_by,
                     'published_at' => now() // Auto-publish
                 ]);
-
                 $successCount++;
             }
 

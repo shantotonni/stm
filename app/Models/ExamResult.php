@@ -33,14 +33,14 @@ class ExamResult extends Model
         parent::boot();
 
         static::saving(function ($result) {
-            // Auto-calculate percentage if exam is loaded
             if ($result->exam) {
+                // Calculate percentage
                 $result->percentage = ($result->marks_obtained / $result->exam->total_marks) * 100;
 
-                // Auto-calculate grade
-                $result->grade = self::calculateGrade($result->percentage);
+                // Calculate grade (instance method)
+                $result->grade = $result->calculateGrade();
 
-                // Auto-determine pass/fail status
+                // Determine pass/fail
                 $result->status = $result->marks_obtained >= $result->exam->passing_marks ? 'pass' : 'fail';
             }
         });
@@ -62,9 +62,9 @@ class ExamResult extends Model
         return $this->belongsTo(User::class, 'evaluated_by');
     }
 
-    public function calculateGrade()
+    public function calculateGrade(): string
     {
-        $percentage = ($this->marks_obtained / $this->exam->total_marks) * 100;
+        $percentage = $this->percentage;
 
         if ($percentage >= 80) return 'A+';
         if ($percentage >= 75) return 'A';

@@ -44,6 +44,73 @@ class StudentAttendance extends Model
         return $query->where('class_id', $classId);
     }
 
+    public function scopeByStatus($query, $status)
+    {
+        return $query->where('attendance_status', $status);
+    }
+
+    public function scopeByClass($query, $classId)
+    {
+        return $query->where('class_id', $classId);
+    }
+
+    public function isPresent(): bool
+    {
+        return in_array($this->attendance_status, ['present', 'late']);
+    }
+
+    public function scopeByStudent($query, $studentId)
+    {
+        return $query->where('student_id', $studentId);
+    }
+
+    public static function isEligibleForExam($studentId, $subjectId = null): array
+    {
+        $query = self::query()
+            ->join('classes', 'student_attendance.class_id', '=', 'classes.id')
+            ->where('student_attendance.student_id', $studentId)
+            ->where('classes.status', 'completed');
+
+        if ($subjectId) {
+            $query->join('class_schedules', 'classes.schedule_id', '=', 'class_schedules.id')
+                ->where('class_schedules.subject_id', $subjectId);
+        }
+
+        $totalClasses = $query->count();
+        $attendedClasses = (clone $query)
+            ->whereIn('student_attendance.attendance_status', ['present', 'late'])
+            ->count();
+
+        $percentage = $totalClasses > 0 ? round(($attendedClasses / $totalClasses) * 100, 2) : 0;
+        $isEligible = $percentage >= 75;
+
+        return [
+            'total_classes' => $totalClasses,
+            'attended_classes' => $attendedClasses,
+            'percentage' => $percentage,
+            'is_eligible' => $isEligible,
+            'required_percentage' => 75,
+        ];
+    }
+
+    public static function getClassSummary($classId): array
+    {
+        $total = self::where('class_id', $classId)->count();
+        $present = self::where('class_id', $classId)->where('attendance_status', 'present')->count();
+        $absent = self::where('class_id', $classId)->where('attendance_status', 'absent')->count();
+        $late = self::where('class_id', $classId)->where('attendance_status', 'late')->count();
+        $excused = self::where('class_id', $classId)->where('attendance_status', 'excused')->count();
+
+        return [
+            'total_students' => $total,
+            'present' => $present,
+            'absent' => $absent,
+            'late' => $late,
+            'excused' => $excused,
+            'attendance_rate' => $total > 0 ? round((($present + $late) / $total) * 100, 2) : 0,
+        ];
+    }
+
     public function scopeForStudent($query, $studentId)
     {
         return $query->where('student_id', $studentId);

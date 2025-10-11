@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AttendanceReportController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassScheduleController;
+use App\Http\Controllers\ClassScheduleReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
@@ -13,19 +15,25 @@ use App\Http\Controllers\EvaluationStatementController;
 use App\Http\Controllers\ExamAttendanceController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\ExamResultController;
+use App\Http\Controllers\ExamScheduleReportController;
 use App\Http\Controllers\ExamStatusController;
 use App\Http\Controllers\ExamStudentController;
 use App\Http\Controllers\ExamSupervisorController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MenuPermissionController;
+use App\Http\Controllers\NoticeController;
+use App\Http\Controllers\NoticeReportController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SessionsController;
+use App\Http\Controllers\StudentAttendanceController;
+use App\Http\Controllers\StudentAttendanceReportController;
 use App\Http\Controllers\StudentAuthController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentDashboardController;
+use App\Http\Controllers\StudentResultReportController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\TeacherSubjectController;
@@ -317,7 +325,7 @@ Route::middleware(['jwt:api'])->group(function () {
     Route::prefix('results')->group(function () {
         Route::post('/', [ExamResultController::class, 'store']);
         Route::post('/bulk', [ExamResultController::class, 'bulkStore']);
-        Route::get('/exam/{examId}', [ExamResultController::class, 'examResults']);
+        //Route::get('/exam/{examId}', [ExamResultController::class, 'examResults']);
         Route::get('/student/{studentId}', [ExamResultController::class, 'studentResults']);
         Route::put('/{id}', [ExamResultController::class, 'update']);
     });
@@ -386,20 +394,113 @@ Route::middleware(['jwt:api'])->group(function () {
     Route::get('/exams/{examId}/students', [ResultController::class, 'getExamStudents']);
 
 
+//    Route::prefix('attendance')->group(function () {
+//
+//        // Get students list for marking attendance
+//        Route::post('/students', [AttendanceController::class, 'getStudentsByClass']);
+//
+//        // Save bulk attendance
+//        Route::post('/save-bulk', [AttendanceController::class, 'saveBulkAttendance']);
+//
+//        // Get attendance report with filters
+//        Route::get('/report', [AttendanceController::class, 'getAttendanceReport']);
+//
+//        // Get attendance summary for a specific class
+//        Route::get('/summary/{classId}', [AttendanceController::class, 'getClassSummary']);
+//
+//    });
+
+    // ============================================
+    // Teacher & Admin Routes - Attendance Management
+    // ============================================
     Route::prefix('attendance')->group(function () {
-        // Get today's scheduled classes
-        Route::get('/today-classes', [AttendanceController::class, 'getTodayClasses']);
+        // Get students for a class
+        Route::get('/class/{classId}/students', [AttendanceController::class, 'getStudentsForClass']);
 
-        // Get students for a specific class
-        Route::get('/class/{classId}/students', [AttendanceController::class, 'getClassStudents']);
+        // Mark bulk attendance
+        Route::post('/mark-bulk', [AttendanceController::class, 'markBulkAttendance']);
 
-        // Save attendance
-        Route::post('/save', [AttendanceController::class, 'saveAttendance']);
+        // Mark all present
+        Route::post('/class/{classId}/mark-all-present', [AttendanceController::class, 'markAllPresent']);
 
-        // Get attendance report
-        Route::get('/report', [AttendanceController::class, 'getAttendanceReport']);
+        // Get class attendance
+        Route::get('/class/{classId}', [AttendanceController::class, 'getClassAttendance']);
+
+        // Update single attendance
+        Route::put('/{attendanceId}', [AttendanceController::class, 'updateAttendance']);
+
+        // Delete attendance
+        Route::delete('/{attendanceId}', [AttendanceController::class, 'deleteAttendance']);
     });
 
+    // ============================================
+    // Admin Routes - Reports & Analytics
+    // ============================================
+    Route::prefix('attendance/reports')->group(function () {
+        // General attendance report with filters
+        Route::get('/', [AttendanceReportController::class, 'getReport']);
+
+        // Student-wise summary
+        Route::get('/students', [AttendanceReportController::class, 'getStudentSummary']);
+
+        // Subject-wise report
+        Route::get('/subjects', [AttendanceReportController::class, 'getSubjectWiseReport']);
+
+        // Department-wise report
+        Route::get('/departments', [AttendanceReportController::class, 'getDepartmentWiseReport']);
+
+        // Dashboard analytics
+        Route::get('/dashboard', [AttendanceReportController::class, 'getDashboardAnalytics']);
+    });
+
+    // ============================================
+    // Student Routes - View Own Attendance
+    // ============================================
+    Route::prefix('my-attendance')->group(function () {
+        // Get overall attendance summary
+        Route::get('/summary', [StudentAttendanceController::class, 'getMyAttendance']);
+
+        // Get monthly attendance
+        Route::get('/monthly', [StudentAttendanceController::class, 'getMonthlyAttendance']);
+
+        // Get subject-wise attendance
+        Route::get('/subjects', [StudentAttendanceController::class, 'getSubjectWiseAttendance']);
+
+        // Get attendance history
+        Route::get('/history', [StudentAttendanceController::class, 'getAttendanceHistory']);
+
+        // Get attendance warnings
+        Route::get('/warnings', [StudentAttendanceController::class, 'getAttendanceWarnings']);
+    });
+
+    // Get all departments
+    //Route::get('/departments', [ClassController::class, 'getDepartments']);
+
+    // Get subjects by department
+    Route::get('/departments/{departmentId}/subjects', [ClassController::class, 'getSubjectsByDepartment']);
+
+    // Get classes with filters
+    Route::get('/classes', [ClassController::class, 'getClasses']);
+
+    // Get single class details
+    Route::get('/classes/{classId}', [ClassController::class, 'getClassDetails']);
+
+
+    Route::prefix('notices')->group(function () {
+
+        // Notice statistics
+        Route::get('/statistics', [NoticeController::class, 'statistics']);
+
+        // Toggle notice status
+        Route::patch('/{id}/toggle-status', [NoticeController::class, 'toggleStatus']);
+
+        // Standard CRUD operations
+        Route::apiResource('/', NoticeController::class);
+    });
+
+// Public routes (for viewing active notices without authentication)
+    Route::get('/public/notices', [NoticeController::class, 'index'])->name('notices.public');
+    Route::get('/public/notices/{id}', [NoticeController::class, 'show'])->name('notices.public.show');
 
     //common route
     Route::get('/get-session', [CommonController::class, 'getAllSession']);
@@ -416,7 +517,39 @@ Route::middleware(['jwt:api'])->group(function () {
     Route::get('/teachers/{teacher}', [CommonController::class, 'show']);
     Route::get('/subjects/{subject}/teachers', [CommonController::class, 'getTeachersBySubject']);
 
+});
 
+Route::middleware(['middleware' => ['jwt:api']])->prefix('reports')->group(function () {
+
+    // Student Result Reports
+    Route::prefix('results')->group(function () {
+        Route::get('/', [StudentResultReportController::class, 'index']);
+        Route::get('/export', [StudentResultReportController::class, 'export']);
+    });
+
+    // Student Attendance Reports
+    Route::prefix('attendance')->group(function () {
+        Route::get('/', [StudentAttendanceReportController::class, 'index']);
+        Route::get('/summary', [StudentAttendanceReportController::class, 'summary']);
+    });
+
+    // Class Schedule Reports
+    Route::prefix('class-schedule')->group(function () {
+        Route::get('/', [ClassScheduleReportController::class, 'index']);
+        Route::get('/weekly', [ClassScheduleReportController::class, 'weekly']);
+    });
+
+    // Notice Reports
+    Route::prefix('notices')->group(function () {
+        Route::get('/', [NoticeReportController::class, 'index']);
+        Route::get('/{id}', [NoticeReportController::class, 'show']);
+    });
+
+    // Exam Schedule Reports
+    Route::prefix('exam-schedule')->group(function () {
+        Route::get('/', [ExamScheduleReportController::class, 'index']);
+        Route::get('/calendar', [ExamScheduleReportController::class, 'calendar']);
+    });
 });
 
 
