@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Exam;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ExamScheduleReportController extends ReportController
 {
@@ -16,8 +18,9 @@ class ExamScheduleReportController extends ReportController
         if ($this->isAdmin()) {
             // Admin can see all exam schedules
         } elseif ($this->isDepartmentHead()) {
+            $head = User::query()->with('department')->where('id',Auth::user()->id)->first();
             // Department Head: See all exams in their department
-            $query->where('department_id', $this->getUserDepartmentId());
+            $query->where('department_id', $head->id);
         } elseif ($this->isTeacher()) {
             // Teacher: See exam schedules of their subjects
             $query->where('teacher_id', $this->getUserId());

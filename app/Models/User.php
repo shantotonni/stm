@@ -48,12 +48,6 @@ class User extends Authenticatable implements JWTSubject
     }
 
 
-    public function setIsChangePasswordAttribute($value)
-    {
-        $this->attributes['is_change_password'] = 'N';
-    }
-
-
     public function getJWTIdentifier()
     {
         return $this->getKey();

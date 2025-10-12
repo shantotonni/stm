@@ -173,7 +173,7 @@ class ClassController extends Controller
         ]);
     }
 
-    public function getDepartments(): JsonResponse
+    public function getDepartments()
     {
         try {
             $departments = Department::select('id', 'name', 'code')
@@ -194,7 +194,7 @@ class ClassController extends Controller
         }
     }
 
-    public function getSubjectsByDepartment($departmentId): JsonResponse
+    public function getSubjectsByDepartment($departmentId)
     {
         try {
             // Get subjects linked to this department through class_schedules

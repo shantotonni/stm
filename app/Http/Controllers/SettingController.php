@@ -15,21 +15,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class SettingController extends Controller
 {
-    public function dbConnection($outlet){
-        $outletIP = OutletIP::where('DepotCode',$outlet)->first();
-        $ipAddress =$outletIP->IPAddress;
-        Config::set("database.connections.sqlsrv_eps", [
-            'driver' => 'sqlsrv',
-            'host' =>$ipAddress,
-            'port' =>1433,
-            'database' =>'EPS' ,
-            'username' => 'sa',
-            'password' => 'flexiload',
-            'charset' => 'utf8',
-            'prefix' => '',
-            'prefix_indexes' => true,
-        ]);
-    }
+
     public function menuPermission(Request $request)
     {
         $path = $request->name;
