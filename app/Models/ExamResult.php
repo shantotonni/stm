@@ -78,6 +78,31 @@ class ExamResult extends Model
         return 'F';
     }
 
+    public static function calculateGradeAndGpa($percentage)
+    {
+        if ($percentage >= 80) {
+            return ['grade' => 'A+', 'gpa' => 5.00];
+        } elseif ($percentage >= 75) {
+            return ['grade' => 'A', 'gpa' => 4.00];
+        } elseif ($percentage >= 70) {
+            return ['grade' => 'A-', 'gpa' => 3.50];
+        } elseif ($percentage >= 65) {
+            return ['grade' => 'B+', 'gpa' => 3.25];
+        } elseif ($percentage >= 60) {
+            return ['grade' => 'B', 'gpa' => 3.00];
+        } elseif ($percentage >= 55) {
+            return ['grade' => 'B-', 'gpa' => 2.75];
+        } elseif ($percentage >= 50) {
+            return ['grade' => 'C+', 'gpa' => 2.50];
+        } elseif ($percentage >= 45) {
+            return ['grade' => 'C', 'gpa' => 2.25];
+        } elseif ($percentage >= 40) {
+            return ['grade' => 'D', 'gpa' => 2.00];
+        } else {
+            return ['grade' => 'F', 'gpa' => 0.00];
+        }
+    }
+
     public function scopePublished($query)
     {
         return $query->whereNotNull('published_at');

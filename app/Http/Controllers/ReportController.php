@@ -277,7 +277,7 @@ class ReportController extends Controller
 
     protected function getUserRole()
     {
-        return Auth::user()->role;
+        return Auth::user()->role->name;
     }
 
     protected function getUserDepartmentId()

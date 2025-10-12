@@ -182,7 +182,7 @@ Route::middleware(['jwt:api'])->group(function () {
         Route::delete('/{id}', [UserController::class, 'destroy']);
     });
 
-    Route::get('/roles', [UserController::class, 'getRoles']);
+    Route::get('/get-roles', [UserController::class, 'getRoles']);
 
     Route::prefix('teachers')->group(function () {
         Route::get('/', [TeacherController::class, 'index']);
@@ -513,13 +513,35 @@ Route::middleware(['jwt:api'])->group(function () {
     Route::get('/get-subjects', [CommonController::class, 'getAllSubject']);
     Route::get('/get-exam-types', [CommonController::class, 'getAllExamType']);
     Route::get('/get-teacher', [CommonController::class, 'getAllTeacher']);
+    Route::get('/get-year', [CommonController::class, 'getAllYear']);
     Route::get('/get-classroom', [CommonController::class, 'getAllClassRoom']);
     Route::get('/teachers/{teacher}', [CommonController::class, 'show']);
     Route::get('/subjects/{subject}/teachers', [CommonController::class, 'getTeachersBySubject']);
 
 });
 
-Route::middleware(['middleware' => ['jwt:api']])->prefix('reports')->group(function () {
+Route::middleware(['jwt:api'])->group(function () {
+    // Exam Result Routes
+    Route::prefix('exam-results')->group(function () {
+        Route::get('/', [ExamResultController::class, 'index']);
+        Route::post('/', [ExamResultController::class, 'store']);
+        Route::get('/{id}', [ExamResultController::class, 'show']);
+        Route::put('/{id}', [ExamResultController::class, 'update']);
+        Route::delete('/{id}', [ExamResultController::class, 'destroy']);
+
+        // Result Actions
+        Route::post('/{id}/publish', [ExamResultController::class, 'publish']);
+        Route::post('/{id}/unpublish', [ExamResultController::class, 'unpublish']);
+        Route::post('/{id}/recheck', [ExamResultController::class, 'recheck']);
+
+        // Import/Export
+        Route::post('/import', [ExamResultController::class, 'import']);
+        Route::get('/export/{examId}', [ExamResultController::class, 'export']);
+        Route::get('/exam/{examId}', [ExamResultController::class, 'byExam']);
+    });
+});
+
+Route::middleware(['jwt:api'])->prefix('reports')->group(function () {
 
     // Student Result Reports
     Route::prefix('results')->group(function () {
@@ -543,6 +565,10 @@ Route::middleware(['middleware' => ['jwt:api']])->prefix('reports')->group(funct
     Route::prefix('notices')->group(function () {
         Route::get('/', [NoticeReportController::class, 'index']);
         Route::get('/{id}', [NoticeReportController::class, 'show']);
+    });
+
+    Route::prefix('student-results')->group(function () {
+        Route::get('/semester', [StudentResultReportController::class, 'getSemesterResults']);
     });
 
     // Exam Schedule Reports

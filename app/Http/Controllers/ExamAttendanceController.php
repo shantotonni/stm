@@ -16,7 +16,6 @@ class ExamAttendanceController extends Controller
         try {
             $exam = Exam::findOrFail($examId);
 
-            // Exam এ যারা enrolled আছে তাদের সাথে attendance data join করা
             $students = DB::table('exam_students')
                 ->join('students', 'exam_students.student_id', '=', 'students.id')
                 ->leftJoin('exam_attendance', function($join) use ($examId) {

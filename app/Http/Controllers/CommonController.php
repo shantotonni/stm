@@ -102,9 +102,7 @@ class CommonController extends Controller
 
     public function getAllYear(){
         $years = DB::table('years')->get();
-        return response()->json([
-           'years' => $years
-        ]);
+        return response()->json($years);
     }
 
     public function getDepartments()

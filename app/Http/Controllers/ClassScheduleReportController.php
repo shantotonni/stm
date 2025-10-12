@@ -30,19 +30,19 @@ class ClassScheduleReportController extends ReportController
         }
 
         // Apply filters
-        if ($request->has('department_id')) {
+        if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
 
-        if ($request->has('day')) {
-            $query->where('day', $request->day);
+        if ($request->filled('day')) {
+            $query->where('day_of_week', $request->day);
         }
 
-        if ($request->has('teacher_id')) {
+        if ($request->filled('teacher_id')) {
             $query->where('teacher_id', $request->teacher_id);
         }
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('class_title', 'like', "%{$search}%")
@@ -56,7 +56,7 @@ class ClassScheduleReportController extends ReportController
         }
 
         // Sorting
-        $query->orderBy('day')->orderBy('start_time');
+        $query->orderBy('day_of_week')->orderBy('start_time');
 
         // Pagination
         $perPage = $request->get('per_page', 50);
@@ -66,15 +66,15 @@ class ClassScheduleReportController extends ReportController
         $schedules->getCollection()->transform(function ($schedule) {
             return [
                 'id' => $schedule->id,
-                'class_title' => $schedule->class_title,
-                'day' => $schedule->day,
+                'class_title' => $schedule->class_type,
+                'day' => $schedule->day_of_week,
                 'start_time' => $schedule->start_time,
                 'end_time' => $schedule->end_time,
                 'subject' => $schedule->subject->name,
                 'subject_code' => $schedule->subject->code,
                 'teacher' => $schedule->teacher->name,
-                'classroom' => $schedule->classroom->room_number,
-                'building' => $schedule->classroom->building,
+                'classroom' => $schedule->classroom->code,
+                'building' => $schedule->classroom->name,
                 'department' => $schedule->department->name,
                 'color_code' => $schedule->color_code ?? $this->generateColorCode($schedule->id),
             ];
@@ -85,13 +85,11 @@ class ClassScheduleReportController extends ReportController
 
     public function weekly(Request $request)
     {
-        // Get weekly schedule in calendar format
-        $query = ClassSchedule::with(['subject', 'teacher', 'classroom', 'department']);
+        $query = ClassSchedule::with(['subject', 'teacher', 'classroom', 'department'])
+            ->where('is_active', 1);
 
-        // Apply same role-based filtering
-        if ($this->isAdmin()) {
-            // Admin can see all
-        } elseif ($this->isDepartmentHead()) {
+        // 🔒 Role-based Filtering
+        if ($this->isDepartmentHead()) {
             $query->where('department_id', $this->getUserDepartmentId());
         } elseif ($this->isTeacher()) {
             $query->where('teacher_id', $this->getUserId());
@@ -101,31 +99,36 @@ class ClassScheduleReportController extends ReportController
             });
         }
 
-        $schedules = $query->orderBy('day')->orderBy('start_time')->get();
+        // 🎯 Get all schedules sorted by day + time
+        $schedules = $query->orderByRaw("
+        FIELD(day_of_week, 'monday','tuesday','wednesday','thursday','friday','saturday','sunday')
+    ")->orderBy('start_time')->get();
 
-        // Group by day
+        // 🗓️ Group by day
         $weeklySchedule = [
-            'Monday' => [],
-            'Tuesday' => [],
-            'Wednesday' => [],
-            'Thursday' => [],
-            'Friday' => [],
-            'Saturday' => [],
-            'Sunday' => [],
+            'monday' => [],
+            'tuesday' => [],
+            'wednesday' => [],
+            'thursday' => [],
+            'friday' => [],
+            'saturday' => [],
+            'sunday' => [],
         ];
 
         foreach ($schedules as $schedule) {
-            $weeklySchedule[$schedule->day][] = [
+            $weeklySchedule[strtolower($schedule->day_of_week)][] = [
                 'id' => $schedule->id,
-                'class_title' => $schedule->class_title,
+                'subject' => $schedule->subject->name ?? 'N/A',
+                'teacher' => $schedule->teacher->name ?? 'N/A',
+                'department' => $schedule->department->name ?? 'N/A',
+                'classroom' => $schedule->classroom->name ?? 'N/A',
                 'start_time' => $schedule->start_time,
                 'end_time' => $schedule->end_time,
-                'subject' => $schedule->subject->name,
-                'teacher' => $schedule->teacher->name,
-                'classroom' => $schedule->classroom->room_number,
+                'class_type' => ucfirst($schedule->class_type ?? 'Lecture'),
                 'color_code' => $schedule->color_code ?? $this->generateColorCode($schedule->id),
             ];
         }
+
 
         return $this->jsonResponse($weeklySchedule);
     }

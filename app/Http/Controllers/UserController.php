@@ -186,7 +186,7 @@ class UserController extends Controller
     // Get all roles for dropdown
     public function getRoles()
     {
-        $roles = \App\Models\Role::all();
+        $roles = \App\Models\Role::with('menus')->get();
         return response()->json($roles);
     }
 

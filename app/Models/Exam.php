@@ -200,4 +200,14 @@ class Exam extends Model
         });
     }
 
+    public function studentResults()
+    {
+        return $this->hasMany(ExamResult::class);
+    }
+
+    public function getResultForStudent($studentId)
+    {
+        return $this->studentResults()->where('student_id', $studentId)->first();
+    }
+
 }

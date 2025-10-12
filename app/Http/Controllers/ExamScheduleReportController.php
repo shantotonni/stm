@@ -31,19 +31,20 @@ class ExamScheduleReportController extends ReportController
         }
 
         // Apply filters
-        if ($request->has('department_id')) {
+        if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
 
-        if ($request->has('subject_id')) {
+        if ($request->filled('subject_id')) {
             $query->where('subject_id', $request->subject_id);
         }
 
-        if ($request->has('exam_type')) {
-            $query->where('exam_type', $request->exam_type);
+
+        if ($request->filled('exam_type')) {
+            $query->where('exam_type_id', $request->exam_type);
         }
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $status = $request->status;
             if ($status === 'upcoming') {
                 $query->where('exam_date', '>=', Carbon::now());
@@ -52,15 +53,15 @@ class ExamScheduleReportController extends ReportController
             }
         }
 
-        if ($request->has('from_date')) {
+        if ($request->filled('from_date')) {
             $query->where('exam_date', '>=', $request->from_date);
         }
 
-        if ($request->has('to_date')) {
+        if ($request->filled('to_date')) {
             $query->where('exam_date', '<=', $request->to_date);
         }
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('exam_title', 'like', "%{$search}%")
@@ -99,8 +100,8 @@ class ExamScheduleReportController extends ReportController
                 'duration' => $schedule->duration,
                 'department' => $schedule->department->name,
                 'teacher' => $schedule->teacher->name,
-                'classroom' => $schedule->classroom->room_number,
-                'building' => $schedule->classroom->building,
+                'classroom' => $schedule->classroom->name,
+                'building' => $schedule->classroom->code,
                 'total_marks' => $schedule->total_marks,
                 'status' => $status,
                 'days_until' => $daysUntil,

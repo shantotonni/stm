@@ -9,7 +9,8 @@ class StudentAttendanceReportController extends ReportController
 {
     public function index(Request $request)
     {
-        $query = StudentAttendance::with(['student.department', 'subject']);
+
+        $query = StudentAttendance::with(['student.department', 'class.schedule.subject']);
 
         // Role-based filtering
         if ($this->isAdmin()) {
@@ -30,29 +31,32 @@ class StudentAttendanceReportController extends ReportController
         }
 
         // Apply filters
-        if ($request->has('department_id')) {
+        if ($request->filled('department_id')) {
             $query->whereHas('student', function ($q) use ($request) {
                 $q->where('department_id', $request->department_id);
             });
         }
 
-        if ($request->has('subject_id')) {
-            $query->where('subject_id', $request->subject_id);
+        if ($request->filled('subject_id')) {
+            $query->whereHas('class.schedule.subject', function ($q) use ($request) {
+                $q->where('subject_id', $request->subject_id);
+            });
+            //$query->where('subject_id', $request->subject_id);
         }
 
-        if ($request->has('month')) {
-            $query->whereMonth('date', $request->month);
+        if ($request->filled('month')) {
+            $query->whereMonth('marked_at', $request->month);
         }
 
-        if ($request->has('year')) {
-            $query->whereYear('date', $request->year);
+        if ($request->filled('year')) {
+            $query->whereYear('marked_at', $request->year);
         }
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('student', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('roll_number', 'like', "%{$search}%");
+                    ->orWhere('roll_no', 'like', "%{$search}%");
             });
         }
 
@@ -60,16 +64,16 @@ class StudentAttendanceReportController extends ReportController
         $attendanceData = $query->get()->groupBy('student_id')->map(function ($records) {
             $student = $records->first()->student;
             $totalClasses = $records->count();
-            $present = $records->where('status', 'present')->count();
-            $absent = $records->where('status', 'absent')->count();
+            $present = $records->where('attendance_status', 'present')->count();
+            $absent = $records->where('attendance_status', 'absent')->count();
             $percentage = $totalClasses > 0 ? round(($present / $totalClasses) * 100, 2) : 0;
 
             return [
                 'student_id' => $student->id,
                 'student_name' => $student->name,
-                'roll_number' => $student->roll_number,
+                'roll_number' => $student->roll_no,
                 'department' => $student->department->name,
-                'month' => $request->get('month', date('m')),
+                'month' => date('m'),
                 'total_classes' => $totalClasses,
                 'present' => $present,
                 'absent' => $absent,
