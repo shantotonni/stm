@@ -152,6 +152,54 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsToMany(User::class, 'teacher_students', 'teacher_id', 'student_id');
     }
 
+    public function favoriteBooks()
+    {
+        return $this->belongsToMany(Book::class, 'user_favorites')
+            ->withTimestamps();
+    }
+
+    public function favorites()
+    {
+        return $this->hasMany(UserFavorite::class);
+    }
+
+    public function downloadedBooks()
+    {
+        return $this->belongsToMany(Book::class, 'book_downloads')
+            ->withTimestamps()
+            ->withPivot('ip_address', 'user_agent');
+    }
+
+    public function bookDownloads()
+    {
+        return $this->hasMany(BookDownload::class);
+    }
+
+    public function bookRatings()
+    {
+        return $this->hasMany(BookRating::class);
+    }
+
+    public function hasFavorited($bookId)
+    {
+        return $this->favorites()->where('book_id', $bookId)->exists();
+    }
+
+    public function hasDownloaded($bookId)
+    {
+        return $this->bookDownloads()->where('book_id', $bookId)->exists();
+    }
+
+    public function hasRated($bookId)
+    {
+        return $this->bookRatings()->where('book_id', $bookId)->exists();
+    }
+
+    public function getRatingForBook($bookId)
+    {
+        return $this->bookRatings()->where('book_id', $bookId)->first();
+    }
+
 //    public function isAdmin()
 //    {
 //        return $this->role === 'admin';

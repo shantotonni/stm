@@ -10,7 +10,7 @@ class SubjectController extends Controller
 {
     public function index(Request $request)
     {
-        return $query = Subject::with('department')->get();
+        $query = Subject::with('department');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -107,5 +107,39 @@ class SubjectController extends Controller
         return response()->json([
             'message' => 'Subject deleted successfully'
         ]);
+    }
+
+    public function getDepartmentWiseSubject(Request $request){
+        try {
+            $query = Subject::query();
+
+            // Filter by department_id if provided
+            if ($request->has('department_id') && $request->department_id) {
+                $query->where('department_id', $request->department_id);
+            }
+
+            // Order by name
+            $query->orderBy('name', 'asc');
+
+            // Get active subjects only (optional)
+            if ($request->has('is_active')) {
+                $query->where('is_active', $request->is_active);
+            }
+
+            $subjects = $query->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Subjects retrieved successfully',
+                'data' => $subjects
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading subjects',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

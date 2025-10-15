@@ -38,6 +38,16 @@ class Subject extends Model
         return $this->belongsTo(Department::class);
     }
 
+    public function books()
+    {
+        return $this->hasMany(Book::class);
+    }
+
+    public function activeBooks()
+    {
+        return $this->hasMany(Book::class)->where('is_active', true);
+    }
+
     public function program()
     {
         return $this->belongsTo(Program::class);

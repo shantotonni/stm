@@ -71,4 +71,14 @@ class Department extends Model
         });
     }
 
+    public function books()
+    {
+        return $this->hasMany(Book::class);
+    }
+
+    public function activeBooks()
+    {
+        return $this->hasMany(Book::class)->where('is_active', true);
+    }
+
 }

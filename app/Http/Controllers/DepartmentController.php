@@ -54,7 +54,7 @@ class DepartmentController extends Controller
     public function show($id)
     {
         try {
-            $department = Department::with('headTeacher:id,name')->find($id);
+            $department = Department::with('headTeacher:id,name','subjects')->find($id);
 
             if (!$department) {
                 return response()->json([

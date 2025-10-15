@@ -10,8 +10,14 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::orderBy('id','desc')->get();
-        return new CategoryCollection($categories);
+        $categories = Category::withCount('activeBooks')
+            ->active()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $categories,
+        ]);
     }
 
     public function store(Request $request)
@@ -29,6 +35,20 @@ class CategoryController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Category created successfully'
+        ]);
+    }
+
+    public function show($id)
+    {
+        $category = Category::with(['activeBooks' => function ($query) {
+            $query->with(['department', 'subject'])
+                ->latest()
+                ->limit(12);
+        }])->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $category,
         ]);
     }
 

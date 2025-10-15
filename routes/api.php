@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceReportController;
+use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ClassroomController;
@@ -540,6 +541,48 @@ Route::middleware(['jwt:api'])->group(function () {
         Route::get('/exam/{examId}', [ExamResultController::class, 'byExam']);
     });
 });
+
+// Public routes
+Route::prefix('library')->group(function () {
+
+    // Books
+    Route::get('/books', [BookController::class, 'index']);
+    Route::get('/books/featured', [BookController::class, 'featured']);
+    Route::get('/books/popular', [BookController::class, 'popular']);
+    Route::get('/books/recent', [BookController::class, 'recent']);
+    Route::get('/books/{id}', [BookController::class, 'show']);
+
+
+    Route::get('/categories/{id}', [CategoryController::class, 'show']);
+
+    Route::get('/departments/{id}', [DepartmentController::class, 'show']);
+
+    // Subjects
+    Route::get('/subjects/{id}', [SubjectController::class, 'show']);
+
+    Route::get('subjects', [SubjectController::class, 'getDepartmentWiseSubject']);
+});
+
+// Protected routes (requires authentication)
+Route::middleware(['jwt:api'])->prefix('library')->group(function () {
+
+    // Book management (admin only - add middleware as needed)
+    Route::post('/books', [BookController::class, 'store']);
+    Route::put('/books/{id}', [BookController::class, 'update']);
+    Route::delete('/books/{id}', [BookController::class, 'destroy']);
+
+    // Book actions
+    Route::get('/books/{id}/download', [BookController::class, 'download']);
+    Route::post('/books/{id}/favorite', [BookController::class, 'toggleFavorite']);
+    Route::post('/books/{id}/rate', [BookController::class, 'rate']);
+
+    // User favorites
+    Route::get('/favorites', [BookController::class, 'favorites']);
+});
+
+
+
+
 
 Route::middleware(['jwt:api'])->prefix('reports')->group(function () {
 
